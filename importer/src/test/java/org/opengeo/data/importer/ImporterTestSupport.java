@@ -27,7 +27,7 @@ import java.util.Map;
 import net.sf.json.JSONObject;
 import net.sf.json.util.JSONBuilder;
 
-public class ImporterTestSupport extends GeoServerTestSupport {
+public abstract class ImporterTestSupport extends GeoServerTestSupport {
 
     protected Importer importer;
 

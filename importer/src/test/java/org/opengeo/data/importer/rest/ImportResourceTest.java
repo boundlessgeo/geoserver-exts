@@ -17,6 +17,7 @@ import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImporterTestSupport;
 import org.opengeo.data.importer.SpatialFile;
 
+import com.mockrunner.mock.web.MockHttpServletRequest;
 import com.mockrunner.mock.web.MockHttpServletResponse;
 import java.util.Iterator;
 
@@ -216,5 +217,22 @@ public class ImportResourceTest extends ImporterTestSupport {
         assertEquals("sf", ctx.getTargetWorkspace().getName());
         assertNotNull(ctx.getTargetStore());
         assertEquals("skunkworks", ctx.getTargetStore().getName());
+    }
+
+    private MockHttpServletResponse postAsServletResponseNoContentType(String path, String body) throws Exception {
+        MockHttpServletRequest request = createRequest(path);
+        request.setMethod("POST");
+        request.setBodyContent(body);
+        return dispatch(request);
+    }
+
+    public void testPostNoMediaType() throws Exception {
+        MockHttpServletResponse resp = postAsServletResponseNoContentType("/rest/imports", "");
+        assertEquals(201, resp.getStatusCode());
+    }
+
+    public void testImportSessionIdNotInt() throws Exception {
+        MockHttpServletResponse resp = postAsServletResponse("/rest/imports/foo", "");
+        assertEquals(404, resp.getStatusCode());
     }
 }

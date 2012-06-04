@@ -2,22 +2,6 @@ package org.opengeo.data.importer.rest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.multipart.FilePart;
-import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
-import org.apache.commons.httpclient.methods.multipart.Part;
-import org.opengeo.data.importer.Directory;
-import org.opengeo.data.importer.ImportContext;
-import org.opengeo.data.importer.ImportTask;
-import org.opengeo.data.importer.ImporterTestSupport;
-import org.opengeo.data.importer.SpatialFile;
-
-import com.mockrunner.mock.web.MockHttpServletRequest;
-import com.mockrunner.mock.web.MockHttpServletResponse;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,15 +10,38 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.multipart.FilePart;
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
+import org.apache.commons.httpclient.methods.multipart.Part;
 import org.apache.commons.io.FileUtils;
 import org.geoserver.catalog.impl.DataStoreInfoImpl;
+import org.geoserver.data.util.IOUtils;
 import org.geotools.data.Transaction;
 import org.geotools.jdbc.JDBCDataStore;
+import org.opengeo.data.importer.DataFormat;
+import org.opengeo.data.importer.Directory;
+import org.opengeo.data.importer.GridFormat;
+import org.opengeo.data.importer.ImportContext;
+import org.opengeo.data.importer.ImportData;
+import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
+import org.opengeo.data.importer.ImporterTestSupport;
+import org.opengeo.data.importer.SpatialFile;
+import org.opengeo.data.importer.VFSWorker;
 import org.opengeo.data.importer.transform.CreateIndexTransform;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
+
+import com.mockrunner.mock.web.MockHttpServletRequest;
+import com.mockrunner.mock.web.MockHttpServletResponse;
 
 /**
  * @todo extract postgis stuff to online test case
@@ -286,5 +293,77 @@ public class TaskResourceTest extends ImporterTestSupport {
         assertTrue(task.getData() instanceof SpatialFile);
         assertEquals(ImportTask.State.READY, task.getState());
     }
+    
+    private void uploadGeotiffAndVerify(String taskName,
+            InputStream geotiffResourceStream, String contentType) throws Exception {
+        // upload  tif or zip file containing a tif and verify the results
+        MockHttpServletResponse resp = postAsServletResponse("/rest/imports", "");
+        assertEquals(201, resp.getStatusCode());
+        assertNotNull(resp.getHeader("Location"));
 
+        String[] split = resp.getHeader("Location").split("/");
+        Integer id = Integer.parseInt(split[split.length-1]);
+        ImportContext context = importer.getContext(id);
+
+        MockHttpServletRequest req = createRequest("/rest/imports/" + id + "/tasks/" + taskName);
+        req.setContentType(contentType);
+        req.addHeader("Content-Type", contentType);
+        req.setMethod("PUT");
+        req.setBodyContent(org.apache.commons.io.IOUtils.toByteArray(geotiffResourceStream));
+        resp = dispatch(req);
+
+        assertEquals(201, resp.getStatusCode());
+
+        context = importer.getContext(context.getId());
+        assertNull(context.getData());
+        assertEquals(1, context.getTasks().size());
+
+        ImportTask task = context.getTasks().get(0);
+        assertEquals(ImportTask.State.READY, task.getState());
+
+        ImportData importData = task.getData();
+        assertTrue(importData instanceof SpatialFile);
+
+        DataFormat format = importData.getFormat();
+        assertTrue(format instanceof GridFormat);
+
+        List<ImportItem> items = task.getItems();
+        assertEquals(1, items.size());
+        ImportItem importItem = items.get(0);
+        assertEquals(ImportItem.State.READY, importItem.getState());
+    }
+
+    public void testPostGeotiffBz2() throws Exception {
+        String path = "geotiff/EmissiveCampania.tif.bz2";
+        InputStream stream = ImporterTestSupport.class.getResourceAsStream("../test-data/" + path);
+
+        uploadGeotiffAndVerify(new File(path).getName(), stream, "application/x-bzip2");
+    }
+
+
+    public void testPostGeotiff() throws Exception {
+        File tempBase = tmpDir();
+        File tempDir = new File(tempBase, "testPostGeotiff");
+        if (!tempDir.mkdirs()) {
+            throw new IllegalStateException("Cannot create temp dir for testing geotiff");
+        }
+
+        String tifname = "EmissiveCampania.tif";
+        String bz2name = tifname + ".bz2";
+        File destinationArchive = new File(tempDir, bz2name);
+        InputStream inputStream = ImporterTestSupport.class.getResourceAsStream("../test-data/geotiff/" + bz2name);
+
+        IOUtils.copy(inputStream, destinationArchive);
+
+        VFSWorker vfs = new VFSWorker();
+        vfs.extractTo(destinationArchive, tempDir);
+
+        File tiff = new File(tempDir, tifname);
+        if (!tiff.exists()) {
+            throw new IllegalStateException("Did not extract tif correctly");
+        }
+
+        FileInputStream fis = new FileInputStream(tiff);
+        uploadGeotiffAndVerify(tifname, fis, "image/tiff");
+    }
 }

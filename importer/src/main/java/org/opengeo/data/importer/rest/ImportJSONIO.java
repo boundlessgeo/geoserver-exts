@@ -76,7 +76,7 @@ public class ImportJSONIO {
         json.key("state").value(context.getState());
 
         if (context.getTargetWorkspace() != null) {
-            json.key("targetWorkspsace").value(toJSON(context.getTargetWorkspace()));
+            json.key("targetWorkspace").value(toJSON(context.getTargetWorkspace()));
         }
         if (context.getTargetStore() != null) {
             json.key("targetStore").value(toJSON(context.getTargetStore()));
