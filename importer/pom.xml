@@ -152,18 +152,6 @@
   </dependencies>
 
   <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>org/geoserver/uploader/**</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-    </plugins>
-
     <testResources>
       <testResource>
         <directory>${basedir}/src/test/resources</directory>
