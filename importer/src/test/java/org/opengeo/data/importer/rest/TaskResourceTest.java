@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import org.apache.commons.httpclient.methods.multipart.Part;
 import org.apache.commons.io.FileUtils;
 import org.geoserver.catalog.impl.DataStoreInfoImpl;
 import org.geoserver.data.util.IOUtils;
+import org.geoserver.security.impl.GeoServerRole;
 import org.geotools.data.Transaction;
 import org.geotools.jdbc.JDBCDataStore;
 import org.opengeo.data.importer.DataFormat;
@@ -39,6 +41,10 @@ import org.opengeo.data.importer.VFSWorker;
 import org.opengeo.data.importer.transform.CreateIndexTransform;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
 
 import com.mockrunner.mock.web.MockHttpServletRequest;
 import com.mockrunner.mock.web.MockHttpServletResponse;
@@ -50,14 +56,25 @@ import com.mockrunner.mock.web.MockHttpServletResponse;
 public class TaskResourceTest extends ImporterTestSupport {
     JDBCDataStore jdbcStore;
 
+    // some rest calls now require admin permissions
+    private void doLogin() throws Exception {
+        SecurityContextHolder.setContext(new SecurityContextImpl());
+        List<GrantedAuthority> l = new ArrayList<GrantedAuthority>();
+        l.add(new GeoServerRole("ROLE_ADMINISTRATOR"));
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("admin", "geoserver", l));
+    }
+
     @Override
     protected void setUpInternal() throws Exception {
         super.setUpInternal();
-    
+
+        doLogin();
+
         File dir = unpack("shape/archsites_epsg_prj.zip");
         unpack("geotiff/EmissiveCampania.tif.bz2", dir);
         importer.createContext(new Directory(dir));
-        
+
         DataStoreInfoImpl postgis = new DataStoreInfoImpl(getCatalog());
         postgis.setName("postgis");
         postgis.setType("PostGIS");
