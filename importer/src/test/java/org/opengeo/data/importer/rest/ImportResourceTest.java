@@ -57,6 +57,12 @@ public class ImportResourceTest extends ImporterTestSupport {
         assertEquals(2, imprt.getInt("id"));
         assertTrue(imprt.getString("href").endsWith("/imports/2"));
     }
+    
+    public void testGetNonExistantImport() throws Exception {
+        MockHttpServletResponse resp = getAsServletResponse(("/rest/imports/9999"));
+        
+        assertEquals(404, resp.getStatusCode());
+    }
 
     public void testGetImport() throws Exception {
         JSONObject json = (JSONObject) getAsJSON("/rest/imports/0");
@@ -183,6 +189,31 @@ public class ImportResourceTest extends ImporterTestSupport {
         JSONObject imprt = json.getJSONObject("import");
 
         assertEquals(id, imprt.getInt("id"));
+    }
+    
+    public void testPutWithId() throws Exception {
+        // propose a new import id
+        MockHttpServletResponse resp = putAsServletResponse("/rest/imports/8675309");
+        assertEquals(201, resp.getStatusCode());
+
+        resp = getAsServletResponse("/rest/imports/8675309");
+        assertEquals(200, resp.getStatusCode());
+        JSONObject json = (JSONObject) json(resp);
+        JSONObject imprt = json.getJSONObject("import");
+        
+        assertEquals(8675309, imprt.getInt("id"));
+        
+        // no propose a new one that is less than the earlier
+        resp = putAsServletResponse("/rest/imports/8675000");
+        assertEquals(201, resp.getStatusCode());
+        
+        // it should be one more than the latest
+        resp = getAsServletResponse("/rest/imports/8675310");
+        assertEquals(200, resp.getStatusCode());
+        json = (JSONObject) json(resp);
+        imprt = json.getJSONObject("import");
+        
+        assertEquals(8675310, imprt.getInt("id"));
     }
 
     public void testPostWithTarget() throws Exception {

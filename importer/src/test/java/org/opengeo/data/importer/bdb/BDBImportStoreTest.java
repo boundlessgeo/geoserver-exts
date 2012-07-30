@@ -120,6 +120,15 @@ public class BDBImportStoreTest extends ImporterTestSupport {
     public void testDatabaseRecovery() throws Exception {
         
     }
+    
+    public void testIncrementId() throws Exception {
+        store.advanceId(666L);
+        
+        // the next created import should be one higher
+        ImportContext dumby = new ImportContext();
+        store.add(dumby);
+        assertEquals(new Long(667), dumby.getId());
+    }
 
     class SearchingVisitor implements ImportVisitor {
         long id;

@@ -26,6 +26,16 @@ public class MemoryImportStore implements ImportStore {
         }
         return null;
     }
+
+    @Override
+    public Long advanceId(Long id) {
+        if (id <= idseq.longValue()) {
+            id = idseq.incrementAndGet();
+        } else {
+            idseq.set(id);
+        }
+        return id;
+    }
     
     @Override
     public void add(ImportContext context) {
@@ -48,6 +58,8 @@ public class MemoryImportStore implements ImportStore {
 
     @Override
     public void save(ImportContext context) {
+        imports.remove(context);
+        imports.add(context);
     }
     
     @Override

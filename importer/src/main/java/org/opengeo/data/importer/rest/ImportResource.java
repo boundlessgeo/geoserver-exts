@@ -54,11 +54,22 @@ public class ImportResource extends AbstractResource {
         if (formatGet == null) {
             formatGet = new ImportContextJSONFormat();
         }
-        getResponse().setEntity(formatGet.toRepresentation(lookupContext(true, false)));
+        Object lookupContext = lookupContext(true, false);
+        if (lookupContext == null) {
+            // this means a specific lookup failed
+            getResponse().setStatus(Status.CLIENT_ERROR_NOT_FOUND);
+        } else {
+            getResponse().setEntity(formatGet.toRepresentation(lookupContext));
+        }
     }
 
     @Override
     public boolean allowPost() {
+        return true;
+    }
+    
+    @Override
+    public boolean allowPut() {
         return true;
     }
 
@@ -96,6 +107,48 @@ public class ImportResource extends AbstractResource {
         getResponse().setStatus(Status.SUCCESS_NO_CONTENT);
     }
     
+    private ImportContext createImport(Long id) {
+        //create a new import
+        ImportContext context;
+        try {
+            context = importer.createContext(id);
+            context.setUser(getCurrentUser());
+
+            if (MediaType.APPLICATION_JSON.equals(getRequest().getEntity().getMediaType())) {
+                //read representation specified by user, use it to read 
+                ImportContext newContext = 
+                    (ImportContext) getFormatPostOrPut().toObject(getRequest().getEntity());
+
+                WorkspaceInfo targetWorkspace = newContext.getTargetWorkspace();
+                StoreInfo targetStore = newContext.getTargetStore();
+
+                if (targetWorkspace != null) {
+                    context.setTargetWorkspace(targetWorkspace);
+                }
+                if (targetStore != null) {
+                    context.setTargetStore(targetStore);
+                }
+                if (targetStore != null && targetWorkspace == null) {
+                    //take it from the store 
+                    context.setTargetWorkspace(targetStore.getWorkspace());
+                }
+            }
+
+            context.reattach(importer.getCatalog(), true);
+            getResponse().redirectSeeOther(getPageInfo().rootURI("/imports/"+context.getId()));
+            getResponse().setEntity(new ImportContextJSONFormat().toRepresentation(context));
+            getResponse().setStatus(Status.SUCCESS_CREATED);
+            importer.changed(context);
+        } 
+        catch (IOException e) {
+            throw new RestletException("Unable to create import", Status.SERVER_ERROR_INTERNAL, e);
+        }
+        catch (IllegalArgumentException iae) {
+            throw new RestletException(iae.getMessage(), Status.CLIENT_ERROR_BAD_REQUEST, iae);
+        }
+        return context;
+    }
+    
     @Override
     public void handlePost() {
         Object obj = lookupContext(true, true);
@@ -118,42 +171,29 @@ public class ImportResource extends AbstractResource {
             }
         }
         else {
-            //create a new import
-            try {
-                context = importer.createContext(null);
-                context.setUser(getCurrentUser());
-
-                if (MediaType.APPLICATION_JSON.equals(getRequest().getEntity().getMediaType())) {
-                    //read representation specified by user, use it to read 
-                    ImportContext newContext = 
-                        (ImportContext) getFormatPostOrPut().toObject(getRequest().getEntity());
-
-                    WorkspaceInfo targetWorkspace = newContext.getTargetWorkspace();
-                    StoreInfo targetStore = newContext.getTargetStore();
-                    
-                    if (targetWorkspace != null) {
-                        context.setTargetWorkspace(targetWorkspace);
-                    }
-                    if (targetStore != null) {
-                        context.setTargetStore(targetStore);
-                    }
-                    if (targetStore != null && targetWorkspace == null) {
-                        //take it from the store 
-                        context.setTargetWorkspace(targetStore.getWorkspace());
-                    }
-                }
-
-                context.reattach(importer.getCatalog(), true);
-                getResponse().redirectSeeOther(getPageInfo().rootURI("/imports/"+context.getId()));
-                getResponse().setEntity(new ImportContextJSONFormat().toRepresentation(context));
-                getResponse().setStatus(Status.SUCCESS_CREATED);
-            } 
-            catch (Exception e) {
-                throw new RestletException("Unable to create import", Status.SERVER_ERROR_INTERNAL, e);
-            }
+            context = createImport(null);
         }
         if (context != null) {
             importer.changed(context);
+        }
+    }
+
+    @Override
+    public void handlePut() {
+        // allow the client to specify an id - this will move the sequence forward
+        String i = getAttribute("import");
+        if (i != null) {
+            Long id = null;
+            String error = null;
+            try {
+                id = new Long(i);
+            } catch (NumberFormatException nfe) {
+                throw new RestletException("Invalid ID : " + i, Status.CLIENT_ERROR_BAD_REQUEST);
+            }
+            ImportContext context = createImport(id);
+            assert context.getId() >= id;
+        } else {
+            throw new RestletException("ID must be provided for PUT", Status.CLIENT_ERROR_BAD_REQUEST);
         }
     }
 

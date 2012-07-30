@@ -35,7 +35,9 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Sequence;
 import com.sleepycat.je.SequenceConfig;
+import com.sleepycat.je.StatsConfig;
 import com.sleepycat.je.Transaction;
+import com.sleepycat.je.TransactionConfig;
 
 /**
  * Import store implementation based on Berkley DB Java Edition.
@@ -154,6 +156,27 @@ public class BDBImportStore implements ImportStore {
 
     }
 
+    @Override
+    public Long advanceId(Long id) {
+        assert id != null;
+        // if not an advance, error
+        long current = importIdSeq.getStats(StatsConfig.DEFAULT).getCurrent();
+        if (id.longValue() < current ) {
+            id = new Long(current);
+        }
+        // verify existing doesn't exists (shouldn't but just in case)
+        ImportContext existing = get(id);
+        if (existing != null) {
+            throw new IllegalStateException("proposed in exists!");
+        }
+        // reserve the spot now (the delta must have one added to it)
+        int delta = (int) (id.longValue() -  current + 1);
+        importIdSeq.get(null, delta);
+        existing = new ImportContext(importIdSeq.getStats(StatsConfig.DEFAULT).getCurrent());
+        put(existing);
+        return id;
+    }
+    
     public ImportContext get(long id) {
         DatabaseEntry val = new DatabaseEntry();
         OperationStatus op = db.get(null, key(id), val, LockMode.DEFAULT);
@@ -175,7 +198,7 @@ public class BDBImportStore implements ImportStore {
         return context;
     }
 
-    public void add(ImportContext context) {
+    public synchronized void add(ImportContext context) {
         context.setId(importIdSeq.get(null, 1));
 
         put(context);
@@ -269,7 +292,9 @@ public class BDBImportStore implements ImportStore {
         }
     }
 
-    void put(ImportContext context) {
+    synchronized void put(ImportContext context) {
+        assert context.getId() != null;
+        
         DatabaseEntry val = new DatabaseEntry();
         importBinding.objectToEntry(context, val);
 
