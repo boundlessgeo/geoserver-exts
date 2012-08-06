@@ -17,21 +17,21 @@ public class ImportContextTest extends TestCase {
         assertEquals(ImportContext.State.PENDING, context.getState());
 
         t1.setState(ImportTask.State.READY);
-        context.updateState();
+        context.updated();
         assertEquals(ImportContext.State.INCOMPLETE, context.getState());
         
         t2.setState(ImportTask.State.READY);
         t3.setState(ImportTask.State.READY);
-        context.updateState();
+        context.updated();
         assertEquals(ImportContext.State.READY, context.getState());
 
         t1.setState(ImportTask.State.COMPLETE);
         t2.setState(ImportTask.State.COMPLETE);
-        context.updateState();
+        context.updated();
         assertEquals(ImportContext.State.READY, context.getState());
         
         t3.setState(ImportTask.State.COMPLETE);
-        context.updateState();
+        context.updated();
         assertEquals(ImportContext.State.COMPLETE, context.getState());
     }
 }

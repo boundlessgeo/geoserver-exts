@@ -574,7 +574,6 @@ public class Importer implements InitializingBean, DisposableBean {
             run(task, filter);
         }
 
-        context.updateState();
         context.updated();
         contextStore.save(context);
     }

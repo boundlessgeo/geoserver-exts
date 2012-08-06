@@ -8,6 +8,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.opengeo.data.importer.Directory;
+import org.opengeo.data.importer.ImportContext.State;
 import org.opengeo.data.importer.Importer;
 import org.opengeo.data.importer.ImporterTestSupport;
 import org.opengeo.data.importer.SpatialFile;
@@ -98,6 +99,8 @@ public class ItemResourceTest extends ImporterTestSupport {
         assertEquals("READY", item.get("state"));
         assertEquals("EPSG:26713", 
             item.getJSONObject("resource").getJSONObject("featureType").getString("srs"));
+        State state = context.getState();
+        assertEquals("Invalid context state", State.READY, state);
     }
 
     public void testDeleteItem() throws Exception {

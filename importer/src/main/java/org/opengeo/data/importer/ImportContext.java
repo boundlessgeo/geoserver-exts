@@ -176,7 +176,7 @@ public class ImportContext implements Serializable {
         return null;
     }
 
-    public void updateState() {
+    private void updateState() {
         State newState = State.COMPLETE;
      O: for (ImportTask task : tasks) {
             switch(task.getState()) {
@@ -196,6 +196,7 @@ public class ImportContext implements Serializable {
 
     public void updated() {
         updated = new Date();
+        updateState();
     }
 
     public void delete() throws IOException {
