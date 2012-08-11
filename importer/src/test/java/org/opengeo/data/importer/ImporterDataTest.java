@@ -8,14 +8,23 @@ import java.util.Map;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
+import org.geoserver.catalog.LayerInfo;
+import org.geoserver.catalog.ResourceInfo;
 import org.geotools.data.FeatureSource;
 import org.geotools.data.Query;
 import org.geotools.data.h2.H2DataStoreFactory;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
+import org.opengeo.data.importer.transform.AttributesToPointGeometryTransform;
+import org.opengeo.data.importer.transform.TransformChain;
 import org.opengis.feature.Feature;
 import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.FeatureType;
+import org.opengis.feature.type.GeometryDescriptor;
+
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Point;
 
 
 public class ImporterDataTest extends ImporterTestSupport {
@@ -459,5 +468,80 @@ public class ImporterDataTest extends ImporterTestSupport {
         ImportContext context = importer.createContext(new Database(params), ds);
         assertEquals(1, context.getTasks().size());
         assertEquals(3, context.getTasks().get(0).getItems().size());
+    }
+
+    public void testImportCSV() throws Exception {
+        File dir = unpack("shape/locations.zip");
+        ImportContext context = importer.createContext(new SpatialFile(new File(dir,
+                "locations.csv")));
+        assertEquals(1, context.getTasks().size());
+        ImportTask task = context.getTasks().get(0);
+        assertEquals(1, task.getItems().size());
+        ImportItem item = task.getItems().get(0);
+        assertEquals(ImportItem.State.NO_CRS, item.getState());
+        LayerInfo layer = item.getLayer();
+        ResourceInfo resource = layer.getResource();
+        resource.setSRS("EPSG:4326");
+        assertTrue("Item not ready", importer.prep(item));
+        assertEquals(ImportItem.State.READY, item.getState());
+        task.updateState();
+        assertEquals(ImportTask.State.READY, task.getState());
+        context.updated();
+        assertEquals(ImportContext.State.READY, context.getState());
+        importer.run(context);
+        assertEquals(ImportContext.State.COMPLETE, context.getState());
+        FeatureTypeInfo fti = (FeatureTypeInfo) resource;
+        SimpleFeatureType featureType = (SimpleFeatureType) fti.getFeatureType();
+        GeometryDescriptor geometryDescriptor = featureType.getGeometryDescriptor();
+        assertNull("Expecting no geometry", geometryDescriptor);
+        assertEquals(4, featureType.getAttributeCount());
+    }
+
+    public void testImportCSVIndirect() throws Exception {
+        File dir = unpack("shape/locations.zip");
+        String wsName = getCatalog().getDefaultWorkspace().getName();
+        DataStoreInfo h2DataStore = createH2DataStore(wsName, "csvindirecttest");
+        SpatialFile importData = new SpatialFile(new File(dir, "locations.csv"));
+        ImportContext context = importer.createContext(importData, h2DataStore);
+        assertEquals(1, context.getTasks().size());
+        ImportTask task = context.getTasks().get(0);
+        assertEquals(1, task.getItems().size());
+        ImportItem item = task.getItems().get(0);
+        TransformChain transformChain = item.getTransform();
+        transformChain.add(new AttributesToPointGeometryTransform("LAT", "LON"));
+        assertEquals(ImportItem.State.NO_CRS, item.getState());
+        LayerInfo layer = item.getLayer();
+        ResourceInfo resource = layer.getResource();
+        resource.setSRS("EPSG:4326");
+        assertTrue("Item not ready", importer.prep(item));
+        assertEquals(ImportItem.State.READY, item.getState());
+        task.updateState();
+        assertEquals(ImportTask.State.READY, task.getState());
+        context.updated();
+        assertEquals(ImportContext.State.READY, context.getState());
+        importer.run(context);
+        assertEquals(ImportContext.State.COMPLETE, context.getState());
+        FeatureTypeInfo fti = (FeatureTypeInfo) resource;
+        SimpleFeatureType featureType = (SimpleFeatureType) fti.getFeatureType();
+        GeometryDescriptor geometryDescriptor = featureType.getGeometryDescriptor();
+        assertNotNull("Expecting geometry", geometryDescriptor);
+        assertEquals("Invalid geometry name", "location", geometryDescriptor.getLocalName());
+        assertEquals(3, featureType.getAttributeCount());
+        FeatureSource<? extends FeatureType, ? extends Feature> featureSource = fti.getFeatureSource(null, null);
+        FeatureCollection<? extends FeatureType, ? extends Feature> features = featureSource.getFeatures();
+        assertEquals(9, features.size());
+        FeatureIterator<? extends Feature> featureIterator = features.features();
+        assertTrue("Expected features", featureIterator.hasNext());
+        SimpleFeature feature = (SimpleFeature) featureIterator.next();
+        assertNotNull(feature);
+        assertEquals("Invalid city attribute", "Trento", feature.getAttribute("CITY"));
+        assertEquals("Invalid number attribute", 140, feature.getAttribute("NUMBER"));
+        Object geomAttribute = feature.getAttribute("location");
+        assertNotNull("Expected geometry", geomAttribute);
+        Point point = (Point) geomAttribute;
+        Coordinate coordinate = point.getCoordinate();
+        assertEquals("Invalid x coordinate", 11.12, coordinate.x, 0.1);
+        assertEquals("Invalid y coordinate", 46.07, coordinate.y, 0.1);
+        featureIterator.close();
     }
 }

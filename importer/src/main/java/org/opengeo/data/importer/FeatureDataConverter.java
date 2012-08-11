@@ -1,6 +1,9 @@
 package org.opengeo.data.importer;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.geotools.data.FeatureReader;
@@ -37,7 +40,22 @@ public class FeatureDataConverter {
     }
 
     public void convert(SimpleFeature from, SimpleFeature to) {
-        to.setAttributes(from.getAttributes());
+        Set<String> fromAttrNames = attributeNames(from);
+        Set<String> toAttrNames = attributeNames(to);
+        Set<String> commonNames = new HashSet<String>(fromAttrNames);
+        commonNames.retainAll(toAttrNames);
+        for (String attrName : commonNames) {
+            to.setAttribute(attrName, from.getAttribute(attrName));
+        }
+    }
+
+    private Set<String> attributeNames(SimpleFeature feature) {
+        List<AttributeDescriptor> attributeDescriptors = feature.getType().getAttributeDescriptors();
+        Set<String> attrNames = new HashSet<String>(attributeDescriptors.size());
+        for (AttributeDescriptor attr : attributeDescriptors) {
+            attrNames.add(attr.getLocalName());
+        }
+        return attrNames;
     }
 
     public static FeatureDataConverter DEFAULT = new FeatureDataConverter();

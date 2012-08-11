@@ -108,12 +108,6 @@ public class DataStoreFormat extends VectorFormat {
 
                 // warning - this will log a scary exception if SRS cannot be found
                 try {
-                    SimpleFeatureType nativeFeatureType = dataStore.getSchema(typeName);
-                    //ignore if no geometry
-                    // TODO: make this optional, geometryless should be supported
-                    if (nativeFeatureType.getGeometryDescriptor() == null) {
-                        continue;
-                    }
                     FeatureTypeInfo featureType = 
                             cb.buildFeatureType(dataStore.getFeatureSource(typeName));
                     featureType.setStore(null);

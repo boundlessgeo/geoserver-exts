@@ -422,8 +422,11 @@ public class ImportJSONIO {
                 throw new RuntimeException("unable to locate target class " + json.getString("target"));
             }
             transform = new AttributeRemapTransform(json.getString("field"), clazz);
-        }
-        else {
+        } else if ("AttributesToPointGeometryTransform".equalsIgnoreCase(type)) {
+            String latField = json.getString("latField");
+            String lngField = json.getString("lngField");
+            transform = new AttributesToPointGeometryTransform(latField, lngField);
+        } else {
             throw new RuntimeException("parsing of " + type + " not implemented");
         }
         return transform;
@@ -616,6 +619,10 @@ public class ImportJSONIO {
             AttributeRemapTransform art = (AttributeRemapTransform) transform;
             json.key("field").value(art.getField());
             json.key("target").value(art.getType().getName());
+        } else if (transform.getClass() == AttributesToPointGeometryTransform.class) {
+            AttributesToPointGeometryTransform atpgt = (AttributesToPointGeometryTransform) transform;
+            json.key("latField").value(atpgt.getLatField());
+            json.key("lngField").value(atpgt.getLngField());
         } else {
             throw new IOException("Serializaiton of " + transform.getClass() + " not implemented");
         }
