@@ -1,8 +1,12 @@
 /*
  */
-package org.geoserver.printng.map;
+package org.geoserver.printng.experimental.map;
 
 import junit.framework.TestCase;
+
+import org.geoserver.printng.experimental.map.HTMLMap;
+import org.geoserver.printng.experimental.map.HTMLMapLayer;
+
 
 /**
  *

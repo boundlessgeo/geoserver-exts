@@ -1,27 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
-    
+
   <bean id="restPrintMapping" class="org.geoserver.rest.RESTMapping">
     <property name="routes">
       <map>
         <entry>
-          <key><value>/printng/render{ext}</value></key>
-          <value>printFinder</value>
+          <key>
+            <value>/printng/render.{ext}</value>
+          </key>
+          <value>printFinderFromRequestBody</value>
         </entry>
         <entry>
-          <key><value>/printng/render/{resource}.{ext}</value></key>
-          <value>printFinder</value>
+          <key>
+            <value>/printng/freemarker/{template}.{ext}</value>
+          </key>
+          <value>printFinderFromFreemarkerTemplate</value>
         </entry>
         <entry>
-          <key><value>/printng/maps/{map}</value></key>
-          <value>printFinder</value>
+          <key>
+            <value>/printng/freemarker/{template}</value>
+          </key>
+          <value>printFreemarkerTemplateFinder</value>
         </entry>
       </map>
     </property>
   </bean>
 
-  <bean id="printFinder" class="org.geoserver.printng.PrintFinder">
+  <bean id="printFinderFromRequestBody" class="org.geoserver.printng.restlet.PrintFinder">
+    <constructor-arg index="0">
+      <ref bean="printngReaderRequestBody" />
+    </constructor-arg>
   </bean>
-  
+
+  <bean id="printFinderFromFreemarkerTemplate" class="org.geoserver.printng.restlet.PrintFinder">
+    <constructor-arg index="0">
+      <ref bean="printngReaderFreemarkerTemplate" />
+    </constructor-arg>
+  </bean>
+
+  <bean id="printngReaderRequestBody" class="org.geoserver.printng.spi.RequestBodyReaderSource" />
+  <bean id="printngReaderFreemarkerTemplate" class="org.geoserver.printng.spi.FreemarkerReaderSource" />
+
+  <bean id="printFreemarkerTemplateFinder"
+    class="org.geoserver.printng.restlet.FreemarkerTemplateFinder" />
+
 </beans>

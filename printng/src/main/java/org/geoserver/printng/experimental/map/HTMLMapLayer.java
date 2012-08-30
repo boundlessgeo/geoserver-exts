@@ -1,6 +1,6 @@
 /*
  */
-package org.geoserver.printng.map;
+package org.geoserver.printng.experimental.map;
 
 import com.vividsolutions.jts.geom.Envelope;
 import java.awt.Dimension;

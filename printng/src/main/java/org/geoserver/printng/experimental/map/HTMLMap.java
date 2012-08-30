@@ -1,4 +1,4 @@
-package org.geoserver.printng.map;
+package org.geoserver.printng.experimental.map;
 
 import com.vividsolutions.jts.geom.Envelope;
 import java.io.ByteArrayOutputStream;
@@ -9,7 +9,8 @@ import java.util.Map;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
-import org.geoserver.printng.map.HTMLMapLayer.Tile;
+
+import org.geoserver.printng.experimental.map.HTMLMapLayer.Tile;
 
 /**
  * A 'port' of OpenLayers.Map. Not trying to be complete.

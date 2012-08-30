@@ -12,7 +12,6 @@
   <groupId>org.opengeo.geoserver</groupId>
   <artifactId>printng</artifactId>
   <packaging>jar</packaging>
-  <version>2.2-SNAPSHOT</version>
   <name>GeoServer Printing Extension</name>
 
   <dependencies>
@@ -61,6 +60,14 @@
       <artifactId>commons-io</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.ccil.cowan.tagsoup</groupId>
+      <artifactId>tagsoup</artifactId>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
@@ -70,10 +77,25 @@
       <artifactId>mockrunner</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <scope>test</scope>
+    </dependency>
    <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-opengis</artifactId>
       <scope>test</scope>
+   </dependency>
+   <dependency>
+       <groupId>org.easymock</groupId>
+       <artifactId>easymock</artifactId>
+       <scope>test</scope>
+   </dependency>
+   <dependency>
+       <groupId>org.easymock</groupId>
+       <artifactId>easymockclassextension</artifactId>
+       <scope>test</scope>
    </dependency>
   </dependencies>
 </project>
