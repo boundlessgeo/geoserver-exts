@@ -12,6 +12,7 @@ import org.opengeo.console.monitor.ConsoleRequestData;
 import org.opengeo.console.monitor.SystemStatSnapshot;
 import org.opengis.geometry.BoundingBox;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
 public class ConsoleMessageSerializer {
@@ -48,7 +49,8 @@ public class ConsoleMessageSerializer {
     public JSONObject serializeConsoleRequestData(ConsoleRequestData consoleRequestData) {
         JSONObject json = new JSONObject();
         RequestData requestData = consoleRequestData.getRequestData();
-        ConsoleData consoleData = consoleRequestData.getConsoleData();
+        Optional<ConsoleData> optionalConsoleData = consoleRequestData.getConsoleData();
+        SystemStatSnapshot systemStatSnapshot = consoleRequestData.getSystemStatSnapshot();
 
         json.element("id", requestData.internalid);
 
@@ -121,7 +123,20 @@ public class ConsoleMessageSerializer {
             json.element("resources", resources);
         }
 
-        SystemStatSnapshot systemStatSnapshot = consoleData.getSystemStatSnapshot();
+        // track gwc cache hits
+        if (optionalConsoleData.isPresent()) {
+            ConsoleData consoleData = optionalConsoleData.get();
+
+            boolean cacheHit = consoleData.isCacheHit();
+            json.element("cache_hit", cacheHit);
+
+            Optional<String> cacheMissReason = consoleData.getCacheMissReason();
+            if (cacheMissReason.isPresent()) {
+                json.element("cache_miss_reason", cacheMissReason.get());
+            }
+        }
+
+        // system stats
         json.element("mem_usage", systemStatSnapshot.getTotalMemoryUsage());
         json.element("mem_total", systemStatSnapshot.getTotalMemoryMax());
 

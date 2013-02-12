@@ -32,8 +32,19 @@
       <constructor-arg ref="resourceLoader" index="2"/>
     </bean>
 
+    <bean id="consoleRequestDataMapping" class="java.util.concurrent.ConcurrentHashMap"></bean>
+
+    <bean id="consoleGwcStatistician" class="org.geoserver.monitor.gwc.GwcStatistician"></bean>
+
+    <bean id="consoleMonitorOwsCallback" class="org.geoserver.monitor.ows.MonitorConsoleCallback">
+      <constructor-arg ref="monitor" index="0" />
+      <constructor-arg ref="consoleRequestDataMapping" index="1" />
+      <constructor-arg ref="consoleGwcStatistician" index="2" />
+    </bean>
+
     <bean id="consoleRequestDataFactory" class="org.opengeo.console.monitor.ConsoleRequestDataFactory">
       <constructor-arg ref="consoleJmxSystemMonitor" index="0"/>
+      <constructor-arg ref="consoleRequestDataMapping" index="1"/>
     </bean>
 
     <bean id="consoleJmxSystemMonitor" class="org.opengeo.console.monitor.JmxSystemMonitor" />

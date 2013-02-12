@@ -1,16 +1,24 @@
 package org.opengeo.console.monitor;
 
+import com.google.common.base.Optional;
 
 public class ConsoleData {
 
-    private final SystemStatSnapshot systemStatSnapshot;
+    private final boolean isCacheHit;
 
-    public ConsoleData(SystemStatSnapshot systemStatSnapshot) {
-        this.systemStatSnapshot = systemStatSnapshot;
+    private final Optional<String> cacheMissReason;
+
+    public ConsoleData(boolean isCacheHit, Optional<String> cacheMissReason) {
+        this.isCacheHit = isCacheHit;
+        this.cacheMissReason = cacheMissReason;
     }
 
-    public SystemStatSnapshot getSystemStatSnapshot() {
-        return systemStatSnapshot;
+    public boolean isCacheHit() {
+        return isCacheHit;
+    }
+
+    public Optional<String> getCacheMissReason() {
+        return cacheMissReason;
     }
 
 }
