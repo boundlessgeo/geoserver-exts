@@ -38,6 +38,7 @@ public class Directory extends FileData {
      * flag controlling whether file look up should recurse into sub directories.
      */
     boolean recursive;
+    String name;
 
     public Directory(File file) {
         this(file, true);
@@ -103,9 +104,13 @@ public class Directory extends FileData {
         return new File(this.file,name);
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @Override
     public String getName() {
-        return file.getName();
+        return this.name != null ? this.name : file.getName();
     }
 
     @Override

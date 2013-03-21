@@ -21,6 +21,9 @@ public enum TimeMode {
         }
 
         return new TimeHandler() {
+
+            private static final long serialVersionUID = 1L;
+
             @Override
             public Date computeTimestamp(Granule g) {
                 switch(TimeMode.this) {

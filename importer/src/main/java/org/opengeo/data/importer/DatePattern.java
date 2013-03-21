@@ -13,7 +13,9 @@ import java.util.regex.Pattern;
  * 
  * @author Justin Deoliveira, OpenGeo
  */
-public class DatePattern {
+public class DatePattern implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     final String format;
     final String regex;

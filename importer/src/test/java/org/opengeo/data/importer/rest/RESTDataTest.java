@@ -246,7 +246,8 @@ public class RESTDataTest extends ImporterTestSupport {
                 "{" + 
                     "\"import\": { " + 
                         "\"data\": {" +
-                           "\"type\": \"mosaic\", " + 
+                           "\"type\": \"mosaic\", " +
+                           "\"name\": \"myname\", " +
                            "\"time\": {" +
                               " \"mode\": \"filename\"," + 
                               " \"filenameRegex\": \"(\\\\d){6}\"," + 
@@ -256,11 +257,12 @@ public class RESTDataTest extends ImporterTestSupport {
                     "}" + 
                 "}";
         int i = postNewImport(json);
-        int t = postNewTaskAsMultiPartForm(i, "mosaic/bm_time.zip");
+        int t = putNewTask(i, "mosaic/bm_time.zip");
 
         postImport(i);
 
         LayerInfo l = importer.getContext(i).getTasks().get(0).getItems().get(0).getLayer();
+        assertEquals("myname", l.getName());
         runChecks(l.getName());
     }
 

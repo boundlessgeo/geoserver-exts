@@ -570,7 +570,9 @@ public class ImportJSONIO {
     public Mosaic mosaic(JSONObject json) throws IOException {
         Mosaic m = new Mosaic(json.has("location") ?  new File(json.getString("location")) : 
             Directory.createNew(importer.getUploadRoot()).getFile());
-
+        if (json.has("name")) {
+            m.setName(json.getString("name"));
+        }
         if (json.containsKey("time")) {
             JSONObject time = json.getJSONObject("time");
             if (!time.containsKey("mode")) {

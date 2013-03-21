@@ -8,7 +8,7 @@ import java.util.Map;
  * 
  * @author Justin Deoliveira, OpenGeo
  */
-public abstract class TimeHandler {
+public abstract class TimeHandler implements java.io.Serializable {
 
     /**
      * Initializes the handler with any properties. 

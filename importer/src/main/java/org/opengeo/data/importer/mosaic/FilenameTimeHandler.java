@@ -24,6 +24,8 @@ import com.google.common.base.Preconditions;
  */
 public class FilenameTimeHandler extends TimeHandler {
 
+    private static final long serialVersionUID = 1L;
+
     public static final String FILENAME_REGEX = "filenameRegex";
 
     public static final String TIME_FORMAT = "timeFormat";
