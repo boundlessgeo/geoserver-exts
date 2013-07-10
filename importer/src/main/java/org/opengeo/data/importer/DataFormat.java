@@ -3,22 +3,24 @@ package org.opengeo.data.importer;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.io.FilenameUtils;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.WorkspaceInfo;
+import org.geoserver.platform.GeoServerExtensions;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.geotools.coverage.grid.io.UnknownFormat;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.FileDataStoreFactorySpi;
 import org.geotools.data.FileDataStoreFinder;
-import org.opengeo.data.importer.format.KMLFileFormat;
+import org.geotools.util.logging.Logging;
 import org.opengeo.data.importer.job.ProgressMonitor;
 import org.vfny.geoserver.util.DataStoreUtils;
 
@@ -34,30 +36,26 @@ public abstract class DataFormat implements Serializable {
     /** serialVersionUID */
     private static final long serialVersionUID = 1L;
 
-    /**
-     * mappings of file name extension to format.
-     */
-    static Map<String,Class<? extends DataFormat>> extToFormat = 
-        new HashMap<String, Class<? extends DataFormat>>();
-    static {
-        //extToFormat.put("shp", ShapefileFormat.class);
-        extToFormat.put("kml", KMLFileFormat.class);
-    }
+    static Logger LOG = Logging.getLogger(DataFormat.class);
 
     /**
      * looks up a format based on file extension.
      */
     public static DataFormat lookup(File file) {
-        String ext = FilenameUtils.getExtension(file.getName());
-        if (ext != null && extToFormat.containsKey(ext)) {
-            Class<? extends DataFormat> clazz = extToFormat.get(ext);
+        FileData fileData = new FileData(file); 
+        for (DataFormat df : GeoServerExtensions.extensions(DataFormat.class)) {
             try {
-                return clazz.newInstance();
-            } 
-            catch(Exception e) {}
+                if (df.canRead(fileData)) {
+                    return df;
+                }
+            } catch (IOException e) {
+                LOG.log(Level.FINER, String.format("Error checking if format %s can read file %s, " +
+                    df.getName(), file.getPath()), e);
+            }
         }
 
-        //look for a datastore that can handle the file 
+        //look for a datastore that can handle the file
+        String ext = FilenameUtils.getExtension(file.getName());
         FileDataStoreFactorySpi factory = FileDataStoreFinder.getDataStoreFactory(ext);
         if (factory != null) {
             return new DataStoreFormat(factory);

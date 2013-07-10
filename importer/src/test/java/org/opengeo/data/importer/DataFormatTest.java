@@ -2,6 +2,8 @@ package org.opengeo.data.importer;
 
 import java.io.File;
 
+import org.apache.commons.io.FileUtils;
+
 public class DataFormatTest extends ImporterTestSupport {
 
     public void testLookupShapefile() {
@@ -28,7 +30,10 @@ public class DataFormatTest extends ImporterTestSupport {
     }
 
     public void testLookupKML() throws Exception {
-        DataFormat format = DataFormat.lookup(new File("foo.kml"));
+        File kmlFile = new File(tmpDir(), "foo.kml");
+        FileUtils.touch(kmlFile);
+
+        DataFormat format = DataFormat.lookup(kmlFile);
         assertNotNull("No format found for kml files", format);
         String name = format.getName();
         assertEquals("KML format not found", "KML", name);

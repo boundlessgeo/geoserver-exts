@@ -126,4 +126,9 @@
       </map>
     </property>
   </bean>
+
+  <!--  format beans -->
+  <bean id="kmlFormat" class="org.opengeo.data.importer.format.KMLFileFormat" />
+  <bean id="geoJsonFormat" class="org.opengeo.data.importer.format.GeoJSONFormat" />
+
 </beans>

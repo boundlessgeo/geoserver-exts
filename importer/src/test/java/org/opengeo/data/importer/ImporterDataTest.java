@@ -497,7 +497,7 @@ public class ImporterDataTest extends ImporterTestSupport {
     }
 
     public void testImportCSV() throws Exception {
-        File dir = unpack("shape/locations.zip");
+        File dir = unpack("csv/locations.zip");
         ImportContext context = importer.createContext(new SpatialFile(new File(dir,
                 "locations.csv")));
         assertEquals(1, context.getTasks().size());
@@ -524,7 +524,7 @@ public class ImporterDataTest extends ImporterTestSupport {
     }
 
     public void testImportCSVIndirect() throws Exception {
-        File dir = unpack("shape/locations.zip");
+        File dir = unpack("csv/locations.zip");
         String wsName = getCatalog().getDefaultWorkspace().getName();
         DataStoreInfo h2DataStore = createH2DataStore(wsName, "csvindirecttest");
         SpatialFile importData = new SpatialFile(new File(dir, "locations.csv"));
@@ -572,7 +572,7 @@ public class ImporterDataTest extends ImporterTestSupport {
     }
 
     public void testImportKMLIndirect() throws Exception {
-        File dir = unpack("shape/samplekml.zip");
+        File dir = unpack("kml/sample.zip");
         String wsName = getCatalog().getDefaultWorkspace().getName();
         DataStoreInfo h2DataStore = createH2DataStore(wsName, "kmltest");
         SpatialFile importData = new SpatialFile(new File(dir, "sample.kml"));
@@ -602,5 +602,46 @@ public class ImporterDataTest extends ImporterTestSupport {
         FeatureSource<? extends FeatureType, ? extends Feature> featureSource = fti
                 .getFeatureSource(null, null);
         assertEquals("Unexpected feature count", 20, featureSource.getCount(Query.ALL));
+    }
+
+    public void testGeoJSONImport() throws Exception {
+        DataStoreInfo h2 = 
+            createH2DataStore(getCatalog().getDefaultWorkspace().getName(), "jsontest");
+
+        File dir = unpack("geojson/point.json.zip");
+        ImportContext imp = importer.createContext(
+            new SpatialFile(new File(dir, "point.json")), h2);
+
+        assertEquals(1, imp.getTasks().size());
+        assertEquals(ImportTask.State.READY, imp.task(0).getState());
+
+        importer.run(imp);
+
+        assertEquals(ImportContext.State.COMPLETE, imp.getState());
+
+        runChecks("point");
+    }
+
+    public void testGeoJSONImportDirectory() throws Exception {
+        DataStoreInfo h2 = 
+            createH2DataStore(getCatalog().getDefaultWorkspace().getName(), "jsontest");
+
+        File dir = unpack("geojson/point.json.zip");
+        unpack("geojson/line.json.zip", dir);
+        unpack("geojson/polygon.json.zip", dir);
+
+        ImportContext imp = importer.createContext(new Directory(dir), h2);
+        assertEquals(1, imp.getTasks().size());
+        assertEquals(3, imp.task(0).getItems().size());
+
+        assertEquals(ImportTask.State.READY, imp.task(0).getState());
+
+        importer.run(imp);
+
+        assertEquals(ImportContext.State.COMPLETE, imp.getState());
+
+        runChecks("point");
+        runChecks("line");
+        runChecks("polygon");
     }
 }

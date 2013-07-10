@@ -126,7 +126,7 @@ public class KMLFileFormat extends VectorFormat {
     @Override
     public boolean canRead(ImportData data) throws IOException {
         File file = getFileFromData(data);
-        return file.canRead();
+        return file.canRead() && "kml".equalsIgnoreCase(FilenameUtils.getExtension(file.getName()));
     }
 
     private File getFileFromData(ImportData data) {
