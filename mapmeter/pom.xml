@@ -11,9 +11,9 @@
   </parent>
 
   <groupId>org.opengeo.console</groupId>
-  <artifactId>monitor-console</artifactId>
+  <artifactId>mapmeter</artifactId>
   <packaging>jar</packaging>
-  <name>Console Monitoring Extension</name>
+  <name>Mapmeter Extension</name>
 
   <dependencies>
     <dependency>

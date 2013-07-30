@@ -483,7 +483,7 @@
     <module>cluster</module>
     <module>importer</module>
     <module>metrics</module>
-    <module>monitor-console</module>
+    <module>mapmeter</module>
     <module>printng</module>
     <module>web</module>
     <module>gsr</module>
