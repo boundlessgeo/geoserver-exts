@@ -13,6 +13,7 @@ import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.Model;
+import org.geoserver.cluster.hazelcast.HzCluster;
 import org.geoserver.web.GeoServerApplication;
 import org.geoserver.web.GeoServerSecuredPage;
 
@@ -35,6 +36,7 @@ public class NodeInfoDialog extends Panel {
         Member m = hz.getCluster().getLocalMember();
         InetSocketAddress address = m.getInetSocketAddress();
 
+        add(new Label("groupName", hz.getConfig().getGroupConfig().getName()));
         add(new Label("ip", address.getAddress().getHostAddress()));
         add(new Label("host", address.getHostName()));
         add(new Label("port", new Model(address.getPort())));
@@ -59,6 +61,6 @@ public class NodeInfoDialog extends Panel {
     }
 
     HazelcastInstance getHazelcast() {
-        return GeoServerApplication.get().getBeanOfType(HazelcastInstance.class);
+        return GeoServerApplication.get().getBeanOfType(HzCluster.class).getHz();
     }
 }
