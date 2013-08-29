@@ -12,6 +12,9 @@ public interface MessageTransportConfig {
     // this is where connection checks are made
     String getCheckUrl();
 
+    // where system information gets sent
+    String getSystemUpdateUrl();
+
     Optional<String> getApiKey();
 
     void setStorageUrl(String storageUrl);

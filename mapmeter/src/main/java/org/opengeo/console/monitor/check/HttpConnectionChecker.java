@@ -61,28 +61,14 @@ public class HttpConnectionChecker implements ConnectionChecker {
             int statusCode = maybeStatusCode.get();
             if (statusCode == HttpStatus.SC_NOT_FOUND) {
                 return new ConnectionResult(statusCode, "Not Found");
-            } else if (statusCode != HttpStatus.SC_OK) {
-                return new ConnectionResult(statusCode, "Unexpected status code: " + statusCode);
             } else {
                 Header contentTypeHeader = getMethod.getResponseHeader("Content-Type");
                 if (isJsonResponse(contentTypeHeader)) {
-
-                    InputStream responseBodyAsStream = null;
-                    InputStreamReader inputStreamReader = null;
-                    String responseBodyAsString = null;
-                    try {
-                        responseBodyAsStream = getMethod.getResponseBodyAsStream();
-                        inputStreamReader = new InputStreamReader(responseBodyAsStream,
-                                Charsets.UTF_8);
-                        responseBodyAsString = CharStreams.toString(inputStreamReader);
-                    } finally {
-                        Closeables.closeQuietly(inputStreamReader);
-                        Closeables.closeQuietly(responseBodyAsStream);
-                    }
+                    String responseBodyAsString = getResponseBody(getMethod);
                     JSONObject jsonObject = JSONObject.fromObject(responseBodyAsString);
-                    return createConnectionResultFromJson(jsonObject);
+                    return createConnectionResultFromJson(statusCode, jsonObject);
                 } else {
-                    return successfulResponseWithError("Unexpected server response");
+                    return createResponseWithError(statusCode, "Unexpected server response");
                 }
             }
         } catch (JSONException e) {
@@ -104,48 +90,64 @@ public class HttpConnectionChecker implements ConnectionChecker {
         }
     }
 
-    private ConnectionResult createConnectionResultFromJson(JSONObject jsonObject) {
+    public String getResponseBody(GetMethod getMethod) throws IOException {
+        InputStream responseBodyAsStream = null;
+        InputStreamReader inputStreamReader = null;
+        String responseBodyAsString = null;
+        try {
+            responseBodyAsStream = getMethod.getResponseBodyAsStream();
+            inputStreamReader = new InputStreamReader(responseBodyAsStream, Charsets.UTF_8);
+            responseBodyAsString = CharStreams.toString(inputStreamReader);
+        } finally {
+            Closeables.closeQuietly(inputStreamReader);
+            Closeables.closeQuietly(responseBodyAsStream);
+        }
+        return responseBodyAsString;
+    }
+
+    private ConnectionResult createConnectionResultFromJson(int statusCode, JSONObject jsonObject) {
         Object statusObject = jsonObject.get("status");
         if (statusObject == null) {
-            return successfulResponseWithError("Invalid server response: missing status");
+            return createResponseWithError(statusCode, "Invalid server response: missing status");
         }
         if (!(statusObject instanceof String)) {
-            return successfulResponseWithError("Unexpected server response: status");
+            return createResponseWithError(statusCode, "Unexpected server response: status");
         }
         Object errorObject = jsonObject.get("error");
         String error;
         if (errorObject != null && !(errorObject instanceof String)) {
-            return successfulResponseWithError("Unexpected server response: error");
+            return createResponseWithError(statusCode, "Unexpected server response: error");
         }
         error = (String) errorObject;
 
         String status = (String) statusObject;
         if (!"OK".equals(status)) {
-            return successfulResponseWithError(error != null ? error
+            return createResponseWithError(statusCode, error != null ? error
                     : "Unexpected server response: error");
         }
 
         Object apiKeyStatusObject = jsonObject.get("api_key_status");
         if (apiKeyStatusObject == null) {
-            return successfulResponseWithError("Invalid server response: missing api_key_status");
+            return createResponseWithError(statusCode,
+                    "Invalid server response: missing api_key_status");
         }
         if (!(apiKeyStatusObject instanceof String)) {
-            return successfulResponseWithError("Unexpected server response: api_key_status");
+            return createResponseWithError(statusCode, "Unexpected server response: api_key_status");
         }
         String apiKeyStatus = (String) apiKeyStatusObject;
         if ("VALID".equals(apiKeyStatus)) {
             return new ConnectionResult(HttpStatus.SC_OK);
         } else if ("INVALID".equals(apiKeyStatus)) {
-            return successfulResponseWithError("Invalid API Key");
+            return createResponseWithError(statusCode, "Invalid API Key");
         } else if ("EXPIRED".equals(apiKeyStatus)) {
-            return successfulResponseWithError("API Key expired");
+            return createResponseWithError(statusCode, "API Key expired");
         } else {
-            return successfulResponseWithError("Unexpected server response: api_key_status");
+            return createResponseWithError(statusCode, "Unexpected server response: api_key_status");
         }
     }
 
-    private ConnectionResult successfulResponseWithError(String error) {
-        return new ConnectionResult(HttpStatus.SC_OK, error);
+    private ConnectionResult createResponseWithError(int statusCode, String error) {
+        return new ConnectionResult(statusCode, error);
     }
 
     private boolean isJsonResponse(Header contentTypeHeader) {

@@ -32,7 +32,8 @@
       <constructor-arg value="controller.properties" index="1"/>
       <constructor-arg value="https://app.mapmeter.com/controller/v1/message/store" index="2"/>
       <constructor-arg value="https://app.mapmeter.com/controller/v1/message/check" index="3"/>
-      <constructor-arg ref="resourceLoader" index="4"/>
+      <constructor-arg value="https://app.mapmeter.com/controller/v1/server" index="4"/>
+      <constructor-arg ref="resourceLoader" index="5"/>
     </bean>
 
     <bean id="consoleRequestDataMapping" class="java.util.concurrent.ConcurrentHashMap"></bean>
@@ -56,6 +57,24 @@
       <constructor-arg ref="consoleMessageHttpTransportConfig" index="0" />
       <!-- Connection timeout in milliseconds -->
       <constructor-arg value="30000" index="1" />
+    </bean>
+
+    <bean id="mapmeterSystemDataSupplier" class="org.opengeo.console.monitor.system.SystemDataSupplier">
+      <constructor-arg ref="consoleMessageHttpTransportConfig" index="0"></constructor-arg>
+      <constructor-arg ref="manifestLoader" index="1"></constructor-arg>
+    </bean>
+
+    <bean id="mapmeterSystemDataTransport" class="org.opengeo.console.monitor.system.SystemDataTransport">
+      <constructor-arg ref="mapmeterSystemDataSerializer" index="0"></constructor-arg>
+      <constructor-arg ref="consoleMessageHttpTransportConfig" index="1"></constructor-arg>
+    </bean>
+
+    <bean id="mapmeterSystemDataSerializer" class="org.opengeo.console.monitor.system.SystemDataSerializer">
+    </bean>
+
+    <bean id="mapmeterInitializer" class="org.opengeo.console.monitor.system.MapmeterInitializer">
+      <constructor-arg ref="mapmeterSystemDataSupplier" index="0"></constructor-arg>
+      <constructor-arg ref="mapmeterSystemDataTransport" index="1"></constructor-arg>
     </bean>
 
     <bean class="org.geoserver.web.MenuPageInfo" id="consoleMenuPageLink">

@@ -25,6 +25,8 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
 
     private final String defaultCheckUrl;
 
+    private final String defaultSystemUpdateUrl;
+
     private final String controllerPropertiesRelPath;
 
     private final GeoServerResourceLoader loader;
@@ -35,18 +37,22 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
 
     private Optional<String> apiKey;
 
+    private Optional<String> systemUpdateUrl;
+
     public MessageTransportConfigProperties(String monitoringDataDirName,
             String controllerPropertiesName, String defaultStorageUrl, String defaultCheckUrl,
-            GeoServerResourceLoader loader) {
+            String defaultSystemUpdateUrl, GeoServerResourceLoader loader) {
 
         this.defaultStorageUrl = defaultStorageUrl;
         this.defaultCheckUrl = defaultCheckUrl;
+        this.defaultSystemUpdateUrl = defaultSystemUpdateUrl;
         this.loader = loader;
         this.controllerPropertiesRelPath = monitoringDataDirName + File.separatorChar
                 + controllerPropertiesName;
 
         Optional<String> storageUrl = Optional.absent();
         Optional<String> checkUrl = Optional.absent();
+        Optional<String> systemUpdateUrl = Optional.absent();
         Optional<String> apiKey = Optional.absent();
 
         BufferedReader fileReader = null;
@@ -61,6 +67,7 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
 
                 String storageUrlString = (String) properties.get("url");
                 String checkUrlString = (String) properties.get("checkurl");
+                String systemUpdateUrlString = (String) properties.get("systemupdateurl");
                 String apiKeyString = (String) properties.get("apikey");
 
                 if (apiKeyString != null) {
@@ -75,6 +82,9 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
                 if (checkUrlString != null) {
                     checkUrl = Optional.of(checkUrlString.trim());
                 }
+                if (systemUpdateUrlString != null) {
+                    systemUpdateUrl = Optional.of(systemUpdateUrlString.trim());
+                }
             }
         } catch (IOException e) {
             LOGGER.severe("Failure reading: " + controllerPropertiesRelPath + " from data dir");
@@ -86,6 +96,7 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
         }
         this.storageUrl = storageUrl;
         this.checkUrl = checkUrl;
+        this.systemUpdateUrl = systemUpdateUrl;
         this.apiKey = apiKey;
     }
 
@@ -117,6 +128,11 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
     }
 
     @Override
+    public String getSystemUpdateUrl() {
+        return systemUpdateUrl.or(defaultSystemUpdateUrl);
+    }
+
+    @Override
     public void setStorageUrl(String storageUrl) {
         this.storageUrl = Optional.of(storageUrl);
     }
@@ -129,6 +145,10 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
     @Override
     public void setApiKey(String apiKey) {
         this.apiKey = Optional.of(apiKey);
+    }
+
+    public void setSystemUpdateUrl(String systemUpdateUrl) {
+        this.systemUpdateUrl = Optional.of(systemUpdateUrl);
     }
 
     @Override
@@ -144,6 +164,9 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
         }
         if (checkUrl.isPresent()) {
             properties.setProperty("checkurl", checkUrl.get());
+        }
+        if (systemUpdateUrl.isPresent()) {
+            properties.setProperty("systemupdateurl", systemUpdateUrl.get());
         }
 
         File propFile = null;
