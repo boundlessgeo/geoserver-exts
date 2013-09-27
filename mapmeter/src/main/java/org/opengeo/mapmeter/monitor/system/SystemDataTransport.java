@@ -3,6 +3,8 @@ package org.opengeo.mapmeter.monitor.system;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpConnectionManager;
+import org.apache.commons.httpclient.SimpleHttpConnectionManager;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
@@ -13,9 +15,15 @@ public class SystemDataTransport {
 
     private MessageTransportConfig config;
 
+    private final HttpConnectionManager connectionManager;
+
+    private final HttpClient client;
+
     public SystemDataTransport(SystemDataSerializer serializer, MessageTransportConfig config) {
         this.serializer = serializer;
         this.config = config;
+        connectionManager = new SimpleHttpConnectionManager();
+        client = new HttpClient(connectionManager);
     }
 
     public SystemDataTransportResult transport(SystemData systemData) {
@@ -24,7 +32,6 @@ public class SystemDataTransport {
         synchronized (config) {
             systemUpdateUrl = config.getSystemUpdateUrl();
         }
-        HttpClient client = new HttpClient();
         PostMethod postMethod = new PostMethod(systemUpdateUrl);
         StringRequestEntity requestEntity;
         try {
@@ -45,6 +52,8 @@ public class SystemDataTransport {
             return SystemDataTransportResult.transferError(e);
         } finally {
             postMethod.releaseConnection();
+            // this connection should close immediately
+            connectionManager.closeIdleConnections(0);
         }
     }
 

@@ -9,8 +9,10 @@ import java.util.logging.Logger;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.SimpleHttpConnectionManager;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.geotools.util.logging.Logging;
@@ -28,12 +30,20 @@ public class HttpMessageTransport implements MessageTransport {
 
     private final MessageSerializer mapmeterMessageSerializer;
 
+    private final HttpConnectionManager connectionManager;
+
+    private final HttpClient client;
+
+    private static final int idleConnectionTimeout = 1000;
+
     public HttpMessageTransport(MessageTransportConfig config) {
         if (!config.getApiKey().isPresent()) {
             LOGGER.warning("Missing mapmeter apikey. Will NOT send messages with no apikey.");
         }
         this.config = config;
         mapmeterMessageSerializer = new MessageSerializer();
+        connectionManager = new SimpleHttpConnectionManager();
+        client = new HttpClient(connectionManager);
     }
 
     // send request data via http post
@@ -55,7 +65,6 @@ public class HttpMessageTransport implements MessageTransport {
 
         String apiKey = maybeApiKey.get();
 
-        HttpClient client = new HttpClient();
         PostMethod postMethod = new PostMethod(storageUrl);
 
         JSONObject json = mapmeterMessageSerializer.serialize(apiKey, data);
@@ -87,6 +96,7 @@ public class HttpMessageTransport implements MessageTransport {
             logCommunicationError(e, storageUrl);
         } finally {
             postMethod.releaseConnection();
+            connectionManager.closeIdleConnections(idleConnectionTimeout);
         }
     }
 

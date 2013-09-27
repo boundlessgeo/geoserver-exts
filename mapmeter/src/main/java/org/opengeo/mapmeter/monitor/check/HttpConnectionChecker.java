@@ -12,9 +12,11 @@ import net.sf.json.JSONObject;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.SimpleHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.geotools.util.logging.Logging;
@@ -32,21 +34,22 @@ public class HttpConnectionChecker implements ConnectionChecker {
 
     private final MessageTransportConfig config;
 
-    private final int connectionTimeout;
+    private final HttpConnectionManager connectionManager;
+
+    private final HttpClient client;
 
     public HttpConnectionChecker(MessageTransportConfig config, int connectionTimeout) {
         this.config = config;
-        this.connectionTimeout = connectionTimeout;
+        connectionManager = new SimpleHttpConnectionManager();
+
+        HttpClientParams clientParams = new HttpClientParams();
+        clientParams.setSoTimeout(connectionTimeout);
+        clientParams.setConnectionManagerTimeout(connectionTimeout);
+        client = new HttpClient(clientParams, connectionManager);
     }
 
     @Override
     public ConnectionResult checkConnection(String apiKey) {
-        HttpClient client = new HttpClient();
-
-        HttpClientParams params = client.getParams();
-        params.setSoTimeout(connectionTimeout);
-        params.setConnectionManagerTimeout(connectionTimeout);
-
         String checkUrl;
         synchronized (config) {
             checkUrl = config.getCheckUrl();
@@ -87,6 +90,8 @@ public class HttpConnectionChecker implements ConnectionChecker {
             return logExceptionAndCreateErrorResult(e);
         } finally {
             getMethod.releaseConnection();
+            // this connection should close immediately
+            connectionManager.closeIdleConnections(0);
         }
     }
 
