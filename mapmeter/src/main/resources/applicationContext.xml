@@ -12,6 +12,9 @@
         <constructor-arg ref="resourceLoader" index="0" />
     </bean>
 
+    <!-- don't show the "Activity" and "Reports" pages in the "Monitor" category -->
+    <bean id="gsMonitorFilter" class="org.geoserver.monitor.GeoServerMonitorFilter" />
+
     <bean id="mapmeterTransporterPostProcessor" class="org.geoserver.monitor.MessageTransportPostProcessor">
       <constructor-arg ref="mapmeterMonitorTransport" index="0"/>
       <constructor-arg ref="mapmeterRequestDataFactory" index="1"/>
