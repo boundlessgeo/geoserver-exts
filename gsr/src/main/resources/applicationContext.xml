@@ -22,6 +22,7 @@
 
 	<bean id="imageResourceController" class="org.opengeo.gsr.core.controller.ImageResourceController">
 		<constructor-arg ref="geoServer" />
+		<constructor-arg ref="servletContext" />
 	</bean>
 
     <bean id="gsrImageResourceDispatcherMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
