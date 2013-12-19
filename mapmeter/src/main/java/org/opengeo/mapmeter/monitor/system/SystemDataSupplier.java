@@ -24,7 +24,11 @@ public class SystemDataSupplier implements Supplier<Optional<SystemData>> {
     @Override
     public Optional<SystemData> get() {
 
-        Optional<String> maybeApiKey = config.getApiKey();
+        Optional<String> maybeApiKey;
+
+        synchronized (config) {
+            maybeApiKey = config.getApiKey();
+        }
 
         if (!maybeApiKey.isPresent()) {
             return Optional.absent();
