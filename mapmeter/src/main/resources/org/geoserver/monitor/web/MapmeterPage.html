@@ -13,8 +13,8 @@
     </fieldset>
     <ul>
       <li>
-      <label for="apikey"><wicket:message key="MapmeterPage.field.apikey">API Key</wicket:message></label>
-      <input style="width: 350px" wicket:id="apikey" type="text" />
+      <label for="apikey-field"><wicket:message key="MapmeterPage.field.apikey">API Key</wicket:message></label>
+      <input style="width: 350px" wicket:id="apikey-field" type="text" />
       </li>
       <li>
         <div wicket:id="apikey-feedback"></div>
@@ -24,6 +24,24 @@
       <a href="#" wicket:id="apikey-button">Save</a>
     </div>
   </form>
+
+  <div wicket:id="apikey-warning">
+    <h2><wicket:message key="MapmeterPage.apikey.warning.heading"></wicket:message></h2>
+    <p><wicket:message key="MapmeterPage.apikey.warning.message"></wicket:message></p>
+    <dl>
+      <dt><wicket:message key="MapmeterPage.apikey.warning.keytitle"></wicket:message></dt>
+      <dd><span wicket:id="active-apikey"></span></dd>
+      <dt><wicket:message key="MapmeterPage.apikey.warning.keysource"></wicket:message></dt>
+      <dd>
+        <div wicket:id="active-apikey-source-environment-variable">
+          <wicket:message key="MapmeterPage.apikey.warning.source.environmentvariable"></wicket:message>
+        </div>
+        <div wicket:id="active-apikey-source-web-context">
+          <wicket:message key="MapmeterPage.apikey.warning.source.webcontext"></wicket:message>
+        </div>
+      </dd>
+    </dl>
+  </div>
 
   <form wicket:id="connection-check-form" method="GET" style="margin-top: 50px">
     <fieldset>

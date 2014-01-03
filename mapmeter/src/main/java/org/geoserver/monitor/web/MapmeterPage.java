@@ -10,6 +10,8 @@ import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.extensions.ajax.markup.html.IndicatingAjaxButton;
 import org.apache.wicket.extensions.ajax.markup.html.IndicatingAjaxLink;
+import org.apache.wicket.markup.html.WebMarkupContainer;
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.RequiredTextField;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
@@ -20,6 +22,7 @@ import org.geotools.util.logging.Logging;
 import org.opengeo.mapmeter.monitor.check.ConnectionChecker;
 import org.opengeo.mapmeter.monitor.check.ConnectionResult;
 import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.config.MessageTransportConfigApiKeySource;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -48,11 +51,39 @@ public class MapmeterPage extends GeoServerSecuredPage {
     }
 
     private void addElements() {
-        addApiKeyForm();
+        Optional<String> maybeApiKey;
+        MessageTransportConfigApiKeySource apiKeySource;
+        synchronized (messageTransportConfig) {
+            maybeApiKey = messageTransportConfig.getApiKey();
+            apiKeySource = messageTransportConfig.getApiKeySource();
+        }
+        String apiKey = maybeApiKey.or("");
+
+        Form<?> apiKeyForm = addApiKeyForm(apiKey);
+        WebMarkupContainer apiWarning = addApiKeyEnvWarning(apiKey, apiKeySource);
         addConnectionCheckForm();
+        boolean isSourceExternal = apiKeySource.isSourceExternal();
+        apiKeyForm.setVisible(!isSourceExternal);
+        apiWarning.setVisible(isSourceExternal);
     }
 
-    private void addConnectionCheckForm() {
+    private WebMarkupContainer addApiKeyEnvWarning(String apiKey,
+            MessageTransportConfigApiKeySource apiKeySource) {
+        WebMarkupContainer apiKeyWarning = new WebMarkupContainer("apikey-warning");
+        apiKeyWarning.add(new Label("active-apikey", Model.of(apiKey)));
+
+        WebMarkupContainer envvarCtr = new WebMarkupContainer(
+                "active-apikey-source-environment-variable");
+        WebMarkupContainer webCtxCtr = new WebMarkupContainer("active-apikey-source-web-context");
+        envvarCtr.setVisible(apiKeySource == MessageTransportConfigApiKeySource.ENVIRONMENT);
+        webCtxCtr.setVisible(apiKeySource == MessageTransportConfigApiKeySource.WEB_CONTEXT);
+        apiKeyWarning.add(envvarCtr);
+        apiKeyWarning.add(webCtxCtr);
+        add(apiKeyWarning);
+        return apiKeyWarning;
+    }
+
+    private Form<?> addConnectionCheckForm() {
         final Form<?> connectionCheckForm = new Form<Void>("connection-check-form");
 
         connectionCheckForm.add(new FeedbackPanel("connection-check-feedback"));
@@ -93,16 +124,13 @@ public class MapmeterPage extends GeoServerSecuredPage {
         connectionCheckForm.add(connectionCheckButton);
 
         add(connectionCheckForm);
+        return connectionCheckForm;
     }
 
-    public void addApiKeyForm() {
+    public Form<?> addApiKeyForm(String apiKey) {
         Form<?> apiKeyForm = new Form<Void>("apikey-form");
 
-        String apiKey;
-        synchronized (messageTransportConfig) {
-            apiKey = messageTransportConfig.getApiKey().or("");
-        }
-        final RequiredTextField<String> apiKeyField = new RequiredTextField<String>("apikey",
+        final RequiredTextField<String> apiKeyField = new RequiredTextField<String>("apikey-field",
                 Model.of(apiKey));
         apiKeyForm.add(apiKeyField);
 
@@ -139,6 +167,8 @@ public class MapmeterPage extends GeoServerSecuredPage {
         apiKeyForm.add(apiKeyButton);
 
         add(apiKeyForm);
+
+        return apiKeyForm;
     }
 
     private void save(String apiKey) throws IOException {

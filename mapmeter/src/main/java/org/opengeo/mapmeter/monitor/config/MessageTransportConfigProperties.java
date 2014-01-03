@@ -227,4 +227,17 @@ public class MessageTransportConfigProperties implements MessageTransportConfig,
         }
     }
 
+    @Override
+    public MessageTransportConfigApiKeySource getApiKeySource() {
+        if (apiKeyEnvironmentVariable.isPresent()) {
+            return MessageTransportConfigApiKeySource.ENVIRONMENT;
+        } else if (apiKeyWebContext.isPresent()) {
+            return MessageTransportConfigApiKeySource.WEB_CONTEXT;
+        } else if (apiKeyProperties.isPresent()) {
+            return MessageTransportConfigApiKeySource.PROPERTIES;
+        } else {
+            return MessageTransportConfigApiKeySource.NO_KEY;
+        }
+    }
+
 }
