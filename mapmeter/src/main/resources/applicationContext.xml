@@ -30,7 +30,9 @@
       <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="0" />
     </bean>
 
-    <bean id="mapmeterMessageHttpTransportConfig" class="org.opengeo.mapmeter.monitor.config.MessageTransportConfigProperties">
+    <bean id="mapmeterMessageHttpTransportConfig"
+          class="org.opengeo.mapmeter.monitor.config.MessageTransportConfigProperties"
+          depends-on="extensions">
       <constructor-arg value="monitoring" index="0"/>
       <constructor-arg value="controller.properties" index="1"/>
       <constructor-arg value="https://app.mapmeter.com/controller/v1/message/store" index="2"/>

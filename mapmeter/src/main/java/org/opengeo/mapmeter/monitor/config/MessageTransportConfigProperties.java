@@ -8,14 +8,9 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletContext;
-
+import org.geoserver.platform.GeoServerExtensions;
 import org.geoserver.platform.GeoServerResourceLoader;
 import org.geotools.util.logging.Logging;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.web.context.WebApplicationContext;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
@@ -23,10 +18,9 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 
-public class MessageTransportConfigProperties implements MessageTransportConfig,
-        ApplicationContextAware {
+public class MessageTransportConfigProperties implements MessageTransportConfig {
 
-    private static final String MAPMETER_ENV_NAME = "MAPMETER_API_KEY";
+    private static final String MAPMETER_APIKEY_OVERRIDE_PROPERTY_NAME = "MAPMETER_API_KEY";
 
     private final static Logger LOGGER = Logging.getLogger(MessageTransportConfigProperties.class);
 
@@ -48,9 +42,7 @@ public class MessageTransportConfigProperties implements MessageTransportConfig,
 
     private Optional<String> apiKeyProperties;
 
-    private Optional<String> apiKeyWebContext;
-
-    private Optional<String> apiKeyEnvironmentVariable;
+    private final Optional<String> apiKeyOverride;
 
     public MessageTransportConfigProperties(String monitoringDataDirName,
             String controllerPropertiesName, String defaultStorageUrl, String defaultCheckUrl,
@@ -108,16 +100,8 @@ public class MessageTransportConfigProperties implements MessageTransportConfig,
             Closeables.closeQuietly(fileReader);
         }
 
-        // Check for the mapmeter key in both the java properties and environment variables
-        // environment variables trump java properties
-        String envVar = System.getenv(MAPMETER_ENV_NAME);
-        String javaProperty = System.getProperty(MAPMETER_ENV_NAME);
-        apiKeyEnvironmentVariable = Optional.fromNullable(envVar).or(
-                Optional.fromNullable(javaProperty));
-
-        // the logic for this happens in setApplicationContext
-        // setting it here for now though just so it always has a value
-        this.apiKeyWebContext = Optional.absent();
+        String apiKeyOverrideProperty = GeoServerExtensions.getProperty(MAPMETER_APIKEY_OVERRIDE_PROPERTY_NAME);
+        apiKeyOverride = Optional.fromNullable(apiKeyOverrideProperty);
 
         this.storageUrl = storageUrl;
         this.checkUrl = checkUrl;
@@ -149,8 +133,7 @@ public class MessageTransportConfigProperties implements MessageTransportConfig,
 
     @Override
     public Optional<String> getApiKey() {
-        // env trumps web.xml trumps config properties
-        return apiKeyEnvironmentVariable.or(apiKeyWebContext).or(apiKeyProperties);
+        return apiKeyOverride.or(apiKeyProperties);
     }
 
     @Override
@@ -215,29 +198,8 @@ public class MessageTransportConfigProperties implements MessageTransportConfig,
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        synchronized (this) {
-            apiKeyWebContext = Optional.absent();
-            if (applicationContext instanceof WebApplicationContext) {
-                WebApplicationContext webApplicationContext = (WebApplicationContext) applicationContext;
-                ServletContext servletContext = webApplicationContext.getServletContext();
-                String apiKeyParam = servletContext.getInitParameter(MAPMETER_ENV_NAME);
-                apiKeyWebContext = Optional.fromNullable(apiKeyParam);
-            }
-        }
-    }
-
-    @Override
-    public MessageTransportConfigApiKeySource getApiKeySource() {
-        if (apiKeyEnvironmentVariable.isPresent()) {
-            return MessageTransportConfigApiKeySource.ENVIRONMENT;
-        } else if (apiKeyWebContext.isPresent()) {
-            return MessageTransportConfigApiKeySource.WEB_CONTEXT;
-        } else if (apiKeyProperties.isPresent()) {
-            return MessageTransportConfigApiKeySource.PROPERTIES;
-        } else {
-            return MessageTransportConfigApiKeySource.NO_KEY;
-        }
+    public boolean isApiKeyOverridden() {
+        return apiKeyOverride.isPresent();
     }
 
 }

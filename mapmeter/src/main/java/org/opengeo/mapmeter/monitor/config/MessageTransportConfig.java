@@ -23,10 +23,9 @@ public interface MessageTransportConfig {
 
     void setApiKey(String apiKey);
 
-    // api keys can come from multiple sources
-    // this allows the ui to display where the api key is coming from
-    MessageTransportConfigApiKeySource getApiKeySource();
-
     void save() throws IOException;
+
+    // the api key can be overridden by an environment variable or from the servlet context
+    boolean isApiKeyOverridden();
 
 }

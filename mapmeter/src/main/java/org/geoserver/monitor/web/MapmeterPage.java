@@ -22,7 +22,6 @@ import org.geotools.util.logging.Logging;
 import org.opengeo.mapmeter.monitor.check.ConnectionChecker;
 import org.opengeo.mapmeter.monitor.check.ConnectionResult;
 import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
-import org.opengeo.mapmeter.monitor.config.MessageTransportConfigApiKeySource;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -52,33 +51,23 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
     private void addElements() {
         Optional<String> maybeApiKey;
-        MessageTransportConfigApiKeySource apiKeySource;
+        boolean isApiKeyOverridden;
         synchronized (messageTransportConfig) {
             maybeApiKey = messageTransportConfig.getApiKey();
-            apiKeySource = messageTransportConfig.getApiKeySource();
+            isApiKeyOverridden = messageTransportConfig.isApiKeyOverridden();
         }
         String apiKey = maybeApiKey.or("");
 
         Form<?> apiKeyForm = addApiKeyForm(apiKey);
-        WebMarkupContainer apiWarning = addApiKeyEnvWarning(apiKey, apiKeySource);
+        WebMarkupContainer apiWarning = addApiKeyEnvWarning(apiKey);
         addConnectionCheckForm();
-        boolean isSourceExternal = apiKeySource.isSourceExternal();
-        apiKeyForm.setVisible(!isSourceExternal);
-        apiWarning.setVisible(isSourceExternal);
+        apiKeyForm.setVisible(!isApiKeyOverridden);
+        apiWarning.setVisible(isApiKeyOverridden);
     }
 
-    private WebMarkupContainer addApiKeyEnvWarning(String apiKey,
-            MessageTransportConfigApiKeySource apiKeySource) {
+    private WebMarkupContainer addApiKeyEnvWarning(String apiKey) {
         WebMarkupContainer apiKeyWarning = new WebMarkupContainer("apikey-warning");
         apiKeyWarning.add(new Label("active-apikey", Model.of(apiKey)));
-
-        WebMarkupContainer envvarCtr = new WebMarkupContainer(
-                "active-apikey-source-environment-variable");
-        WebMarkupContainer webCtxCtr = new WebMarkupContainer("active-apikey-source-web-context");
-        envvarCtr.setVisible(apiKeySource == MessageTransportConfigApiKeySource.ENVIRONMENT);
-        webCtxCtr.setVisible(apiKeySource == MessageTransportConfigApiKeySource.WEB_CONTEXT);
-        apiKeyWarning.add(envvarCtr);
-        apiKeyWarning.add(webCtxCtr);
         add(apiKeyWarning);
         return apiKeyWarning;
     }
