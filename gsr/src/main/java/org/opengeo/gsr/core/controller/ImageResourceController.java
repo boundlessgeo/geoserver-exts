@@ -9,13 +9,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.geoserver.config.GeoServer;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.AbstractController;
 
@@ -23,7 +27,7 @@ import org.springframework.web.servlet.mvc.AbstractController;
  *
  * @author tkunicki
  */
-public class ImageResourceController extends AbstractController {
+public class ImageResourceController extends AbstractController implements ApplicationContextAware {
     
     public static final String PROPERTY_IMAGE_RESOURCE_DIR = "GSR_IMAGE_RESOURCE_DIR";
     
@@ -43,8 +47,8 @@ public class ImageResourceController extends AbstractController {
 
     private final File imageBaseDirectory;
 
-    public ImageResourceController(GeoServer geoserver) {
-        this.imageBaseDirectory = findImageResourceDirectory(geoserver);
+    public ImageResourceController(GeoServer geoserver, ServletContext context) {
+        this.imageBaseDirectory = findImageResourceDirectory(geoserver, context);
     }
 
     @Override
@@ -69,16 +73,19 @@ public class ImageResourceController extends AbstractController {
         }
 
         boolean resolved = false;
-        File imageFile = new File(imageBaseDirectory, fileName);
-        if (imageFile.canRead()) {
-            try {
-                commitResponse(imageFile, response);
-                resolved = true;
-            } catch (IOException e) {
-                logger.info(e.getMessage());
-                if (debug) {
-                    logger.debug("Error dispatching image resource response", e);
+        if (imageBaseDirectory == null) {
+            logger.warn("Unable to dispatch image resource, the property " + PROPERTY_IMAGE_RESOURCE_DIR + " is not set.");
+        } else {
+            File imageFile = new File(imageBaseDirectory, fileName);
+            if (imageFile.canRead()) {
+                try {
+                    commitResponse(imageFile, response);
+                    resolved = true;
+                } catch (IOException e) {
+                    logger.warn("Error dispatching image resource response", e);
                 }
+            } else {
+                logger.warn("Error dispatching image resource response, " + imageFile.getPath() + " not found.");
             }
         }
         return resolved;
@@ -131,21 +138,84 @@ public class ImageResourceController extends AbstractController {
         }
     }
     
-    private File findImageResourceDirectory(GeoServer geoserver) {
-        File candidate;
-        String propertyPath = System.getProperty(PROPERTY_IMAGE_RESOURCE_DIR);
-        if (propertyPath != null) {
-            candidate = new File(propertyPath);
-            if (candidate.isDirectory()) {
-                logger.info("Using " + propertyPath + " for GeoServices REST API image resource directory");
-                return candidate;
+    private File findImageResourceDirectory(GeoServer geoserver, ServletContext context) {
+        
+        // list of accessors, order implies priority
+        List<PropertyAccessor> accessors = Arrays.asList(
+                new SystemPropertyAccessor(),
+                new ServletContextInitParameterAccessor(context),
+                new EnvironmentVariableAccessor(),
+                new DefaultValueAccessor(geoserver));
+        
+        for (PropertyAccessor accessor : accessors) {
+            String path = accessor.get(PROPERTY_IMAGE_RESOURCE_DIR);
+            if (path == null){
+                logger.trace(accessor.source() + " " + PROPERTY_IMAGE_RESOURCE_DIR + " is not set");
             } else {
-                logger.warn("Property " + PROPERTY_IMAGE_RESOURCE_DIR + " is set to " + propertyPath +
-                        " but it does not appear to be a directory");
+                File file = new File(path);
+
+                StringBuilder messageBuilder = new StringBuilder().
+                        append(accessor.source()).
+                        append(' ').
+                        append(PROPERTY_IMAGE_RESOURCE_DIR).
+                        append(" set to ").append(path);
+                if (!file.exists()) {
+                    logger.warn(messageBuilder.append(" , but this path does not exist").toString());
+                } else if (!file.isDirectory()) {
+                    logger.warn(messageBuilder.append(" , which is not a directory").toString());
+                } else if (!file.canWrite()) {
+                    logger.warn(messageBuilder.append(" , which is not writeable").toString());
+                } else {
+                    logger.info(messageBuilder.toString());
+                    return file;
+                }
             }
         }
-        candidate = new File(geoserver.getCatalog().getResourceLoader().getBaseDirectory(), "images");
-        logger.info("Using default location of  " + candidate.getPath() + " for GeoServices REST API image resource directory");
-        return candidate;
+        return null;
     }
+    
+    interface PropertyAccessor {
+        public String get(String propertyName);
+        public String source();
+    }
+    
+    private static class SystemPropertyAccessor implements PropertyAccessor {
+        @Override public String get(String propertyName) {
+            return System.getProperty(propertyName);
+        }
+        @Override public String source() { return "System property"; }
+    }
+    
+    private static class ServletContextInitParameterAccessor implements PropertyAccessor {
+        private final ServletContext context;
+        public ServletContextInitParameterAccessor(ServletContext context) {
+            this.context = context;
+        }
+        @Override public String get(String propertyName) {
+            return context == null ? null : context.getInitParameter(propertyName);
+        }
+        @Override public String source() { return "Servlet context parameter"; }
+    }
+    
+    private static class EnvironmentVariableAccessor implements PropertyAccessor {
+        @Override public String get(String propertyName) {
+            return System.getenv(propertyName);
+        }
+        @Override public String source() { return "Environment variable"; }
+    }
+    
+    private static class DefaultValueAccessor implements PropertyAccessor {
+        private final GeoServer geoserver;
+        public DefaultValueAccessor(GeoServer geoserver) {
+            this.geoserver = geoserver;
+        }
+        @Override public String get(String propertyName) {
+            return geoserver == null ? null : geoserver.getCatalog().
+                    getResourceLoader().
+                    getBaseDirectory().
+                    getAbsolutePath() + File.separator + "images";
+        }
+        @Override public String source() { return "Default value for"; }
+    }
+    
 }
