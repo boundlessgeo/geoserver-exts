@@ -105,6 +105,7 @@ The following is an outline of the Ysld language:
               rotation: <expression>
             <<: *fill
             <<: *symbolizer
+            <<: *graphic
 
 <a name="expression"></a>
 
