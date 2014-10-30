@@ -53,7 +53,7 @@ public class EventHzSynchronizerRecvTest extends HzSynchronizerRecvTest {
 
     @Override
     protected HzSynchronizer getSynchronizer() {
-        return new EventHzSynchronizer(cluster, getGeoServer()) {
+        return new EventHzSynchronizer(cluster, getGeoServer(),getConfigurationLock()) {
 
             @Override
             ScheduledExecutorService getNewExecutor() {

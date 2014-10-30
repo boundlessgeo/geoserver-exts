@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.geoserver.GeoServerConfigurationLock;
 import org.geoserver.catalog.CatalogException;
 import org.geoserver.catalog.Info;
 import org.geoserver.catalog.WorkspaceInfo;
@@ -64,15 +65,18 @@ public abstract class HzSynchronizer extends GeoServerSynchronizer implements Me
     ScheduledExecutorService executor;
 
     /** geoserver configuration */
-    protected GeoServer gs;
+    protected final GeoServer gs;
+
+    protected final GeoServerConfigurationLock geoServerConfigurationLock;
     
     ScheduledExecutorService getNewExecutor() {
         return Executors.newSingleThreadScheduledExecutor();
     }
     
-    public HzSynchronizer(HzCluster cluster, GeoServer gs) {
+    public HzSynchronizer(HzCluster cluster, GeoServer gs,GeoServerConfigurationLock geoServerConfigurationLock) {
         this.cluster = cluster;
         this.gs = gs;
+        this.geoServerConfigurationLock=geoServerConfigurationLock;
 
         topic = cluster.getHz().getTopic("geoserver.config");
         topic.addMessageListener(this);
