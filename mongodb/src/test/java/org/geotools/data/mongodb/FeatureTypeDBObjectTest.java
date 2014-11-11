@@ -109,7 +109,7 @@ public class FeatureTypeDBObjectTest {
         assertThat(right.getTypeName(), is(equalTo(left.getTypeName())));
         // verify feature type user data persisted
         Map<?,?> resultUserData = right.getUserData();
-        Map<?,?> originalUserData = left.getUserData();
+        Map<Object,Object> originalUserData = left.getUserData();
         assertThat(resultUserData.size(), is(equalTo(originalUserData.size())));
         for (Map.Entry entry : resultUserData.entrySet()) {
             assertThat(entry.getValue(), is(equalTo(originalUserData.get(entry.getKey()))));
@@ -144,7 +144,7 @@ public class FeatureTypeDBObjectTest {
                 assertThat(rad.getType().getBinding().getSimpleName(), is(equalTo(oad.getType().getBinding().getSimpleName())));
             }
             Map<?,?> radUserData = rad.getUserData();
-            Map<?,?> oadUserData = oad.getUserData();
+            Map<Object,Object> oadUserData = oad.getUserData();
             assertThat(radUserData.size(), is(equalTo(oadUserData.size())));
             for (Map.Entry entry : radUserData.entrySet()) {
                 assertThat(entry.getValue(), is(equalTo(oadUserData.get(entry.getKey()))));

@@ -75,6 +75,11 @@
    <artifactId>gs-ysld</artifactId>
    <version>${gs.version}</version>
   </dependency>
+  <dependency>
+   <groupId>org.opengeo</groupId>
+   <artifactId>gt-mongodb</artifactId>
+   <version>${gs.version}</version>
+  </dependency>
 
   <dependency>
    <groupId>org.mortbay.jetty</groupId>

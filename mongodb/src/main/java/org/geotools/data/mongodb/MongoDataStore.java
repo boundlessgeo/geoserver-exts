@@ -21,6 +21,7 @@ import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.data.store.ContentState;
+import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.filter.FilterCapabilities;
 import org.geotools.referencing.CRS;
@@ -281,7 +282,7 @@ public class MongoDataStore extends ContentDataStore {
         
         List<Name> typeNameList = new ArrayList<Name>();
         for (String name : typeNameSet) {
-            typeNameList.add(name(name));
+            typeNameList.add(new NameImpl(namespaceURI, name));
         }
         
         return typeNameList;
