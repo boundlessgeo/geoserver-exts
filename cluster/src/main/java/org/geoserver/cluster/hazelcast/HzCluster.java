@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
+import org.geoserver.GeoServerConfigurationLock;
 import org.geoserver.cluster.ClusterConfig;
 import org.geoserver.cluster.ClusterConfigWatcher;
 import org.geoserver.config.GeoServerDataDirectory;
@@ -35,6 +36,7 @@ public class HzCluster implements DisposableBean, InitializingBean {
     HazelcastInstance hz;
     GeoServerResourceLoader rl;
     ClusterConfigWatcher watcher;
+    GeoServerConfigurationLock configurationLock;
 
     /**
      * Get a file from the cluster config directory. Create it by copying a template from the
@@ -137,5 +139,19 @@ public class HzCluster implements DisposableBean, InitializingBean {
     
     ClusterConfig getClusterConfig() {
         return watcher.get();
+    }
+
+    /**
+     * @param configurationLock the configurationLock to set
+     */
+    public void setConfigurationLock(GeoServerConfigurationLock configurationLock) {
+        this.configurationLock = configurationLock;
+    }
+
+    /**
+     * @return the configurationLock
+     */
+    public GeoServerConfigurationLock getConfigurationLock() {
+        return configurationLock;
     }
 }

@@ -6,7 +6,7 @@ public class ReloadHzSynchronizerSendTest extends HzSynchronizerSendTest {
 
     @Override
     protected HzSynchronizer getSynchronizer() {
-        return new ReloadHzSynchronizer(cluster, getGeoServer()) {
+        return new ReloadHzSynchronizer(cluster, getGeoServer(),getConfigurationLock()) {
 
             @Override
             ScheduledExecutorService getNewExecutor() {

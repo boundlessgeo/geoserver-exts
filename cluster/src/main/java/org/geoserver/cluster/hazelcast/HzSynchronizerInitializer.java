@@ -42,11 +42,11 @@ public class HzSynchronizerInitializer implements GeoServerInitializer {
         
         String method = config.getSyncMethod();
         if ("event".equalsIgnoreCase(method)) {
-            syncher = new EventHzSynchronizer(cluster, geoServer);
+            syncher = new EventHzSynchronizer(cluster, geoServer,cluster.getConfigurationLock());
         }
         else {
             method = "reload"; 
-            syncher = new ReloadHzSynchronizer(cluster, geoServer);
+            syncher = new ReloadHzSynchronizer(cluster, geoServer,cluster.getConfigurationLock());
         }
         
         syncher.initialize(configWatcher);

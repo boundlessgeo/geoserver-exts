@@ -12,9 +12,11 @@
          class="org.geoserver.cluster.hazelcast.HzSynchronizerInitializer">
       <property name="cluster" ref="hzCluster"/>
    </bean>
+   
    <bean id="hzCluster" 
          class="org.geoserver.cluster.hazelcast.HzCluster">
       <property name="dataDirectory" ref="dataDirectory"/>
+      <property name="configurationLock" ref="configurationLock"/>
    </bean>
 
 </beans>

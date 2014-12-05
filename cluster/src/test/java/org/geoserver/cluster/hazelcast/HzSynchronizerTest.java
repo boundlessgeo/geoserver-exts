@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.geoserver.GeoServerConfigurationLock;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.event.CatalogListener;
 import org.geoserver.cluster.ClusterConfig;
@@ -24,6 +25,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MessageListener;
+
 import static org.easymock.EasyMock.*;
 
 public abstract class HzSynchronizerTest {
@@ -135,6 +137,10 @@ public abstract class HzSynchronizerTest {
     }
     protected Catalog getCatalog(){
         return catalog;
+    }
+    
+    protected GeoServerConfigurationLock getConfigurationLock(){
+        return EasyMock.createMock(GeoServerConfigurationLock.class);
     }
     
     /**
