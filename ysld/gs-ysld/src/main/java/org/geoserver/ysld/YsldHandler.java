@@ -32,6 +32,9 @@ public class YsldHandler extends StyleHandler {
         super("Ysld", FORMAT);
         this.zoomFinder = zoomFinder;
     }
+    public YsldHandler(ZoomContextFinder zoomFinder) {
+        this(zoomFinder, new UomMapper());
+    }
 
     /**
      * Creates a new handler.
