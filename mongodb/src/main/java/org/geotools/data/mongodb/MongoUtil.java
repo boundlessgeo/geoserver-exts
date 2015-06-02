@@ -31,6 +31,11 @@ public class MongoUtil {
     }
     
     private static Object getDBOValueInternal(Iterator<String> path, Object current) {
+        if (current instanceof List) {
+            // TODO: add support for nested arrays in documents
+            return null;
+        }
+
         if (path.hasNext()) {
             if (current instanceof DBObject) {
                 String key = path.next();
@@ -115,12 +120,12 @@ public class MongoUtil {
             if (k instanceof String) {
                 String field = (String)k;
                 Object v = e.getValue();
-                if (v instanceof DBObject) {
+                if (v instanceof List) {
+                    // this is here as documentation/placeholder.  no array/list support yet.
+                } else if (v instanceof DBObject) {
                     for (Map.Entry<String, Class<?>> childEntry : doFindMappableFields((DBObject)v).entrySet()) {
                         map.put(field + "." + childEntry.getKey(), childEntry.getValue());
                     }
-                } else if (v instanceof List) {
-                    // this is here as documentation/placeholder.  no array/list support yet.
                 } else {
                     Class<?> binding = mapBSONObjectToJavaType(v);
                     if (binding != null) {

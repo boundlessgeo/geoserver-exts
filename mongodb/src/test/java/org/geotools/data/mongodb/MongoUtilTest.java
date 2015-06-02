@@ -4,12 +4,17 @@
 
 package org.geotools.data.mongodb;
 
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import static org.hamcrest.CoreMatchers.*;
 import org.hamcrest.CoreMatchers;
 import static org.junit.Assert.*;
 import org.junit.Test;
+import org.junit.matchers.JUnitMatchers;
+
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  *
@@ -42,6 +47,30 @@ public class MongoUtilTest {
         
         result = MongoUtil.getDBOValue(dbo, "bugusroot.neglectedchild");
         assertThat(result, is(nullValue()));
+    }
+
+    @Test
+    public void findMappableFieldsSkipsArraysOfObjects() {
+        DBObject dbo = new BasicDBObject();
+        BasicDBList list = new BasicDBList();
+        list.add(new BasicDBObject("listItemKey", "value"));
+        dbo.put("unsupportedList", list);
+
+        Map<String, Class<?>> fields = MongoUtil.findMappableFields(dbo);
+
+        assertThat(fields.size(), equalTo(0));
+    }
+
+    @Test
+    public void getDBValueIgnoresArrayKeyPathComponents() {
+        DBObject dbo = new BasicDBObject();
+        BasicDBList list = new BasicDBList();
+        list.add(new BasicDBObject("listItemKey", "value"));
+        dbo.put("unsupportedList", list);
+
+        assertThat(MongoUtil.getDBOValue(dbo, "unsupportedList"), nullValue());
+        assertThat(MongoUtil.getDBOValue(dbo, "unsupportedList.objectInList"), nullValue());
+        assertThat(MongoUtil.getDBOValue(dbo, Arrays.asList("unsupportedList", "objectInList").iterator()), nullValue());
     }
     
 }
