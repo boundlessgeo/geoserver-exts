@@ -4,7 +4,10 @@ import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.vividsolutions.jts.geom.Point;
+
 import java.util.Properties;
+import java.util.Set;
+
 import org.geotools.test.OnlineTestCase;
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -41,7 +44,7 @@ public abstract class MongoTestSupport extends OnlineTestCase {
     }
 
     protected void setUp(DB db) throws Exception {
-        testSetup.setUp(db);
+    	testSetup.setUp(db);
         dataStore = testSetup.createDataStore(fixture);
     }
 
@@ -60,7 +63,7 @@ public abstract class MongoTestSupport extends OnlineTestCase {
     }
 
     protected void assertFeature(SimpleFeature f) {
-        int i = (Integer) f.getAttribute("intProperty");
+        int i = (Integer) f.getAttribute("properties.intProperty");
         assertFeature(f, i);
     }
     
@@ -68,16 +71,16 @@ public abstract class MongoTestSupport extends OnlineTestCase {
         assertNotNull(f.getDefaultGeometry());
         Point p = (Point) f.getDefaultGeometry();
 
-        assertNotNull(f.getAttribute("intProperty"));
+        assertNotNull(f.getAttribute("properties.intProperty"));
 
         assertEquals((double)i, p.getX(), 0.1);
         assertEquals((double)i, p.getY(), 0.1);
 
-        assertNotNull(f.getAttribute("doubleProperty"));
-        assertEquals(i + i*0.1, (Double)f.getAttribute("doubleProperty"), 0.1);
+        assertNotNull(f.getAttribute("properties.doubleProperty"));
+        assertEquals(i + i*0.1, (Double)f.getAttribute("properties.doubleProperty"), 0.1);
 
-        assertNotNull(f.getAttribute("stringProperty"));
-        assertEquals(toString(i), (String)f.getAttribute("stringProperty"));
+        assertNotNull(f.getAttribute("properties.stringProperty"));
+        assertEquals(toString(i), (String)f.getAttribute("properties.stringProperty"));
     }
 
     protected String toString(int i) {

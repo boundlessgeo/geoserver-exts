@@ -1,17 +1,25 @@
 package org.geotools.data.mongodb.geojson;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.vividsolutions.jts.geom.Point;
+
 import org.geotools.data.mongodb.MongoDataStore;
 import org.geotools.data.mongodb.MongoTestSetup;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
 
 public class GeoJSONMongoTestSetup extends MongoTestSetup {
 
     @Override
     protected void setUpDataStore(MongoDataStore dataStore) {
-
+    	
     }
 
     @Override
@@ -29,6 +37,7 @@ public class GeoJSONMongoTestSetup extends MongoTestSetup {
                 .add("intProperty", 0)
                 .add("doubleProperty", 0.0)
                 .add("stringProperty", "zero")
+                .add("listProperty", list(new BasicDBObject("value", 0.1),new BasicDBObject("value", 0.2)))
             .pop()
         .get());
         ft1.save(BasicDBObjectBuilder.start()
@@ -41,6 +50,7 @@ public class GeoJSONMongoTestSetup extends MongoTestSetup {
                 .add("intProperty", 1)
                 .add("doubleProperty", 1.1)
                 .add("stringProperty", "one")
+                .add("listProperty", list(new BasicDBObject("value", 1.1),new BasicDBObject("value", 1.2)))
             .pop()
         .get());
         ft1.save(BasicDBObjectBuilder.start()
@@ -53,13 +63,16 @@ public class GeoJSONMongoTestSetup extends MongoTestSetup {
                 .add("intProperty", 2)
                 .add("doubleProperty", 2.2)
                 .add("stringProperty", "two")
+                .add("listProperty", list(new BasicDBObject("value", 2.1),new BasicDBObject("value", 2.2)))
             .pop()
         .get());
 
-        ft1.ensureIndex(new BasicDBObject("geometry.coordinates", "2d"));
+        ft1.ensureIndex(new BasicDBObject("geometry", "2dsphere"));
+        ft1.ensureIndex(new BasicDBObject("properties.listProperty.value", 1));
 
         DBCollection ft2 = db.getCollection("ft2");
         ft2.drop();
+        
     }
 
 }
