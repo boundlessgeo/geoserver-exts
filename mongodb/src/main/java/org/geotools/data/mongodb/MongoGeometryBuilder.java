@@ -101,9 +101,9 @@ public class MongoGeometryBuilder {
     }
 
     public GeometryCollection toGeometryCollection(BasicDBList obj) {
-        List<Geometry> geoms = new ArrayList();
+        List<Geometry> geoms = new ArrayList<Geometry>();
         for (Object o : obj) {
-            geoms.add(toGeometry(obj));
+            geoms.add(toGeometry((DBObject) o));
         }
         return geometryFactory.createGeometryCollection(geoms.toArray(new Geometry[geoms.size()]));
     }
