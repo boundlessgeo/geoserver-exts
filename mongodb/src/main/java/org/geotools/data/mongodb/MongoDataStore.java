@@ -5,6 +5,8 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import com.mongodb.MongoException;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -15,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+
 import org.geotools.data.FeatureWriter;
 import org.geotools.data.Transaction;
 import org.geotools.data.store.ContentDataStore;
@@ -93,7 +96,7 @@ public class MongoDataStore extends ContentDataStore {
     final MongoClient createMongoClient(MongoClientURI mongoClientURI) {
         try {
             return new MongoClient(mongoClientURI);
-        } catch (UnknownHostException e) {
+        } catch (MongoException e) {
             throw new IllegalArgumentException("Unknown mongodb host(s)", e);
         }
     }
@@ -199,7 +202,7 @@ public class MongoDataStore extends ContentDataStore {
         
         // Collection needs to exist (with index) so that it's returned with createTypeNames()
         dataStoreDB.createCollection(incoming.getTypeName(), new BasicDBObject())
-                .ensureIndex(new BasicDBObject(geometryMapping, "2dsphere"));
+                .createIndex(new BasicDBObject(geometryMapping, "2dsphere"));
        
         // Store FeatureType instance since it can't be inferred (no documents)
         ContentEntry entry = entry (incoming.getName());

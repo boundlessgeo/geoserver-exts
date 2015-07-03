@@ -56,7 +56,7 @@ public class GeoJSONMongoTestSetup extends MongoTestSetup {
             .pop()
         .get());
 
-        ft1.ensureIndex(new BasicDBObject("geometry.coordinates", "2d"));
+        ft1.createIndex(new BasicDBObject("geometry.coordinates", "2d"));
 
         DBCollection ft2 = db.getCollection("ft2");
         ft2.drop();
