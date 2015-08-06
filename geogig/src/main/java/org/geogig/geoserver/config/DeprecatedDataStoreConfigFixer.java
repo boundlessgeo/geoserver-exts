@@ -105,7 +105,7 @@ class DeprecatedDataStoreConfigFixer implements CatalogListener {
                 try {
                     if (Boolean.TRUE.equals(CREATE.lookUp(params))) {
                         DataAccess<? extends FeatureType, ? extends Feature> dataStore;
-                        dataStore = ds.getDataStore(null);
+                        dataStore = new GeoGigDataStoreFactory().createDataStore(params);
                         dataStore.dispose();
                     }
                 } catch (IOException e) {

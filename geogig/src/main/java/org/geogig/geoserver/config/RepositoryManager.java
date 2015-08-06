@@ -285,8 +285,8 @@ public class RepositoryManager {
         Optional<IRemoteRepo> remoteRepo;
         try {
             Hints hints = Hints.readOnly();
-            remoteRepo = RemoteUtils.newRemote(GlobalContextBuilder.builder.build(hints), remote,
-                    null, null);
+            Repository localRepo = GlobalContextBuilder.builder.build(hints).repository();
+            remoteRepo = RemoteUtils.newRemote(localRepo, remote, null);
             if (!remoteRepo.isPresent()) {
                 throw new IllegalArgumentException("Repository not found or not reachable");
             } else {
@@ -296,11 +296,7 @@ public class RepositoryManager {
                     Ref head = repo.headRef();
                     return head;
                 } finally {
-                    try {
-                        repo.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    repo.close();
                 }
             }
         } catch (Exception e) {

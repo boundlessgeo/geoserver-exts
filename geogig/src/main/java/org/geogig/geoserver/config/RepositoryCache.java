@@ -4,7 +4,7 @@ import static java.lang.String.format;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -35,7 +35,7 @@ class RepositoryCache {
                 GeoGIG geogig = notification.getValue();
                 if (geogig != null) {
                     try {
-                        URL location = geogig.getRepository().getLocation();
+                        URI location = geogig.getRepository().getLocation();
                         LOGGER.fine(format("Closing cached GeoGig repository instance %s", location));
                         geogig.close();
                         LOGGER.finer(format("Closed cached GeoGig repository instance %s", location));

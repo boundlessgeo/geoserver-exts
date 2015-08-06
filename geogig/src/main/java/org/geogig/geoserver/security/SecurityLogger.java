@@ -3,8 +3,7 @@ package org.geogig.geoserver.security;
 import static java.lang.String.format;
 
 import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -120,19 +119,19 @@ public class SecurityLogger {
         if (repository == null) {
             return null;
         }
-        URL location = repository.getLocation();
+        URI location = repository.getLocation();
         if (location == null) {
             return null;
         }
         String uri;
         try {
-            File f = new File(location.toURI());
+            File f = new File(location);
             if (f.getName().endsWith(".geogig")) {
                 f = f.getParentFile();
             }
             uri = f.getAbsolutePath();
-        } catch (URISyntaxException e) {
-            uri = location.toExternalForm();
+        } catch (Exception e) {
+            uri = location.toString();
         }
         return uri;
     }
