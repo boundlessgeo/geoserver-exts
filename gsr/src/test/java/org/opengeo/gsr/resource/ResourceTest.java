@@ -6,6 +6,7 @@ package org.opengeo.gsr.resource;
 
 import java.io.File;
 
+import java.net.URI;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.CatalogFactory;
 import org.geoserver.catalog.DataStoreInfo;
@@ -14,11 +15,14 @@ import org.geoserver.catalog.LayerInfo;
 import org.geoserver.catalog.NamespaceInfo;
 import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.catalog.rest.CatalogRESTTestSupport;
+import org.geoserver.config.GeoServerDataDirectory;
 import org.geoserver.data.test.SystemTestData;
+import org.geoserver.platform.GeoServerExtensions;
 import org.opengeo.gsr.validation.JSONValidator;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import org.opengeo.gsr.core.renderer.StyleEncoder;
 
 public class ResourceTest extends CatalogRESTTestSupport {
 
@@ -84,6 +88,23 @@ public class ResourceTest extends CatalogRESTTestSupport {
     @Test
     public void testConfig() {
         assertEquals("/gsr/services/", this.baseURL);
+    }
+
+    @Test
+    public void testGenerateExternalGraphicURL() throws Exception {
+        URI uri;
+
+        uri = new URI("http://somehost:8080/geoserver/somedir/test.png");
+        assertEquals("http://somehost:8080/geoserver/somedir/test.png", StyleEncoder.getExternalGraphicImageResourceURI(uri));
+
+
+        GeoServerDataDirectory data = GeoServerExtensions.bean(GeoServerDataDirectory.class);
+        File fake = new File(data.findStyleDir(), "foobar/test.png");
+        assertEquals("foobar/test.png", StyleEncoder.getExternalGraphicImageResourceURI(fake.toURI()));
+
+        uri = new URI("test.png");
+        assertEquals("test.png", StyleEncoder.getExternalGraphicImageResourceURI(uri));
+
     }
     
     protected boolean validateJSON(String json, String schemaPath) {

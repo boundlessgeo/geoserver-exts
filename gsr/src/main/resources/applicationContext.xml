@@ -24,16 +24,22 @@
         <property name="next" ref="serviceFinder"></property>
     </bean>
 
-	<bean id="imageResourceController" class="org.opengeo.gsr.core.controller.ImageResourceController">
-		<constructor-arg ref="geoServer" />
-	</bean>
+    <bean id="gsrStylePublisher" class="org.opengeo.gsr.ms.resource.ImagePublisher">
+      <constructor-arg ref="resourceLoader"/>
+      <constructor-arg ref="geoServer"/>
+    </bean>
 
-    <bean id="gsrImageResourceDispatcherMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+
+    <bean id="gsrImageResourceMapping"
+            class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
         <property name="alwaysUseFullPath" value="true"/>
         <property name="mappings">
-          <props>
-		      <prop key="/gsr/**/images/**">imageResourceController</prop>
-          </props>
+            <props>
+                <!-- this handles routes like:
+                /gsr/services/<workspace>/MapServer/<layer>/images/<style-or-gsr-uri>
+                -->
+                <prop key="/gsr/**/images/**">gsrStylePublisher</prop>
+            </props>
         </property>
     </bean>
 
@@ -52,37 +58,37 @@
             <map>
                 <entry>
                     <key>
-                        <value>/services?{params}</value>
+                        <value>/services</value>
                     </key>
                     <value>jsonpFilter</value>
                 </entry>
                 <entry>
                     <key>
-                        <value>/services/?{params}</value>
+                        <value>/services/</value>
                     </key>
                     <value>jsonpFilter</value>
                 </entry>
                 <entry>
                     <key>
-                        <value>/services/{workspace}?{params}</value>
+                        <value>/services/{workspace}</value>
                     </key>
                     <value>jsonpFilter</value>
                 </entry>
                 <entry>
                     <key>
-                        <value>/services/{workspace}/{serviceType}?{params}</value>
+                        <value>/services/{workspace}/{serviceType}</value>
                     </key>
                     <value>jsonpFilter</value>
                 </entry>
                 <entry>
                     <key>
-                        <value>/services/{workspace}/{serviceType}/{operation}?{params}</value>
+                        <value>/services/{workspace}/{serviceType}/{operation}</value>
                     </key>
                     <value>jsonpFilter</value>
                 </entry>
                 <entry>
                     <key>
-                        <value>/services/{workspace}/{serviceType}/{layerOrTable}/{operation}?{params}</value>
+                        <value>/services/{workspace}/{serviceType}/{layerOrTable}/{operation}</value>
                     </key>
                     <value>jsonpFilter</value>
                 </entry>

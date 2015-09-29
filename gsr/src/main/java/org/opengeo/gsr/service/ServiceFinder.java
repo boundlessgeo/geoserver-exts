@@ -7,16 +7,16 @@ package org.opengeo.gsr.service;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
-
 import org.geoserver.catalog.rest.AbstractCatalogFinder;
 import org.geoserver.config.GeoServer;
 import org.geoserver.ows.Dispatcher;
 import org.geoserver.wms.WMS;
-import org.opengeo.gsr.fs.resource.FeatureServiceResource;
 import org.opengeo.gsr.fs.resource.FeatureResource;
+import org.opengeo.gsr.fs.resource.FeatureServiceResource;
 import org.opengeo.gsr.fs.resource.LayerResource;
 import org.opengeo.gsr.ms.resource.LayerListResource;
 import org.opengeo.gsr.ms.resource.LegendResource;
@@ -58,9 +58,12 @@ public class ServiceFinder extends AbstractCatalogFinder {
             if (attributes.get("serviceType") != null) {
                 serviceType = attributes.get("serviceType").toString();
             }
-            String params = attributes.get("params").toString();
+            String params = (String) attributes.get("q");
             Map<String, String> paramsMap = getParamsMap(params);
             String format = paramsMap.get("f");
+            if (format == null) {
+                format = "json";
+            }
             
             String operation = "";
             if (attributes.get("operation") != null) {
@@ -70,7 +73,7 @@ public class ServiceFinder extends AbstractCatalogFinder {
             switch (ServiceType.valueOf(serviceType)) {
             case CatalogServer:
                 resource = new CatalogResource(null, request, response, CatalogService.class,
-                        geoServer);
+                        geoServer, format);
                 break;
             case MapServer:
                 if ("".equals(operation)) {
@@ -115,6 +118,9 @@ public class ServiceFinder extends AbstractCatalogFinder {
     }
 
     private Map<String, String> getParamsMap(String params) {
+        if (params == null) {
+            return (Map<String,String>) Collections.EMPTY_MAP;
+        }
         Map<String, String> paramsMap = new HashMap<String, String>();
         StringTokenizer tokenizer = new StringTokenizer(params, "&");
         while (tokenizer.hasMoreTokens()) {

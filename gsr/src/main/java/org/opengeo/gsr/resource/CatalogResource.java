@@ -36,15 +36,15 @@ public class CatalogResource extends GeoServicesResource {
     private final double currentVersion = 10.1;
 
     public CatalogResource(Context context, Request request, Response response, Class<?> clazz,
-            GeoServer geoServer) {
+            GeoServer geoServer, String format) {
         super(context, request, response, clazz, geoServer);
-        this.formatValue = getRequest().getResourceRef().getQueryAsForm().getFirstValue("f");
+        this.formatValue = format;
     }
 
     @Override
     protected Object handleObjectGet() throws Exception {
         try {
-            if (!formatValue.equals("json")) {
+            if (!"json".equals(formatValue)) {
                 List<String> details = new ArrayList<String>();
                 details.add("Format " + formatValue + " is not supported");
                 return new ServiceException(new ServiceError(

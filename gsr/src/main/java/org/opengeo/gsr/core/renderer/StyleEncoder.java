@@ -53,6 +53,8 @@ import java.util.Map;
 
 import net.sf.json.util.JSONBuilder;
 
+import org.geoserver.config.GeoServerDataDirectory;
+import org.geoserver.platform.GeoServerExtensions;
 import org.opengis.filter.And;
 import org.opengis.filter.BinaryComparisonOperator;
 import org.opengis.filter.Filter;
@@ -558,7 +560,7 @@ public class StyleEncoder {
             int xoffset = displacement != null ? evaluateWithDefault(sym.getGraphic().getDisplacement().getDisplacementX(), 0) : 0;
             int yoffset = displacement != null ? evaluateWithDefault(sym.getGraphic().getDisplacement().getDisplacementY(), 0) : 0;
 
-            String url = relativizeExternalGraphicImageResourceURI(resourceURI);
+            String url = getExternalGraphicImageResourceURI(resourceURI);
             return new PictureMarkerSymbol(rawData, url, contentType, components(color, 1), width, height, angle, xoffset, yoffset);
         }
         return null;
@@ -846,9 +848,25 @@ public class StyleEncoder {
         .endObject();
     }
 	
-    static String relativizeExternalGraphicImageResourceURI(URI resourceURI) {
-        String path = resourceURI.getPath();
-        int index = path.lastIndexOf('/');
-        return "images/" + (index < 0 ? path : path.substring(index + 1));
+    public static String getExternalGraphicImageResourceURI(URI resourceURI) {
+        String path = null;
+        if (resourceURI.isAbsolute()) {
+            if (resourceURI.getScheme().startsWith("http")) {
+                return resourceURI.toString();
+            }
+            // absolute file path, relativize to syle dir
+            GeoServerDataDirectory data = GeoServerExtensions.bean(GeoServerDataDirectory.class);
+            String prefix;
+            try {
+                prefix = data.findStyleDir().getAbsolutePath() + "/";
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+            path = resourceURI.getPath().replace(prefix, "");
+        }
+        if (path == null) {
+            path = resourceURI.getPath();
+        }
+        return path;
     }
 }

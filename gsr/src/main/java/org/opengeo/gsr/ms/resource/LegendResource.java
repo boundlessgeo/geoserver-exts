@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
@@ -71,6 +72,8 @@ import org.restlet.resource.Variant;
 
 import com.noelios.restlet.util.Base64;
 import com.thoughtworks.xstream.core.BaseException;
+import java.awt.RenderingHints;
+import java.net.URISyntaxException;
 
 public class LegendResource extends Resource {
     private final Catalog catalog;
@@ -134,26 +137,29 @@ public class LegendResource extends Resource {
             JSONBuilder json = new JSONBuilder(writer);
             json.object().key("layers").array();
             for (int i = 0; i < layers.size(); i++) {
+                LayerInfo lyr = layers.get(i);
                 json.object();
                 json.key("layerId").value(i);
-                json.key("layerName").value(layers.get(i).getName());
+                json.key("layerName").value(lyr.getName());
                 json.key("layerType").value("Feature Layer");
                 json.key("minScale").value(0);
                 json.key("maxScale").value(0);
                 json.key("legend").array();
-                Renderer renderer = StyleEncoder.effectiveRenderer(layers.get(i));
+                Renderer renderer = StyleEncoder.effectiveRenderer(lyr);
                 if (renderer instanceof SimpleRenderer) {
                     SimpleRenderer simpleRenderer = (SimpleRenderer) renderer;
-                    encodeSymbol(json, simpleRenderer.getLabel(), simpleRenderer.getSymbol());
+                    encodeSymbol(json, simpleRenderer.getLabel(), simpleRenderer.getSymbol(), lyr, null);
                 } else if (renderer instanceof ClassBreaksRenderer) {
                     ClassBreaksRenderer classBreaksRenderer = (ClassBreaksRenderer) renderer;
-                    for (ClassBreakInfo classBreakInfo : classBreaksRenderer.getClassBreakInfos()) {
-                        encodeSymbol(json, classBreakInfo.getLabel(), classBreakInfo.getSymbol());
+                    for (int j = 0; j < classBreaksRenderer.getClassBreakInfos().size(); j++) {
+                        ClassBreakInfo info = classBreaksRenderer.getClassBreakInfos().get(j);
+                        encodeSymbol(json, info.getLabel(), info.getSymbol(), lyr, j);
                     }
                 } else if (renderer instanceof UniqueValueRenderer) {
                     UniqueValueRenderer uniqueValueRenderer = (UniqueValueRenderer) renderer;
-                    for (UniqueValueInfo uniqueValueInfo : uniqueValueRenderer.getUniqueValueInfos()) {
-                        encodeSymbol(json, uniqueValueInfo.getLabel(), uniqueValueInfo.getSymbol());
+                    for (int j = 0; j < uniqueValueRenderer.getUniqueValueInfos().size(); j++) {
+                        UniqueValueInfo info = uniqueValueRenderer.getUniqueValueInfos().get(j);
+                        encodeSymbol(json, info.getLabel(), info.getSymbol(), lyr, j);
                     }
                 }
                 json.endArray();
@@ -166,18 +172,39 @@ public class LegendResource extends Resource {
         }
     }
 
-    private static void encodeSymbol(JSONBuilder json, String label, Symbol symbol) {
-        final String encodedImage = encodeImageSymbol(symbol);
+    private static void encodeSymbol(JSONBuilder json, String label, Symbol symbol, LayerInfo layer, Integer idx) {
         json.object().key("label").value(label)
-            .key("contentType").value("image/png")
-            .key("imageData").value(encodedImage)
-            .endObject();
+            .key("contentType").value("image/png");
+        if (symbol instanceof PictureMarkerSymbol) {
+            json.key("imageData").value(((PictureMarkerSymbol) symbol).getImageData());
+            PictureMarkerSymbol pms = (PictureMarkerSymbol) symbol;
+            try {
+                // this is either an absolute URL or a style-relative URI that the
+                // ImagePublisher will resolve
+                json.key("url").value(StyleEncoder.getExternalGraphicImageResourceURI(new URI(pms.getUrl())));
+            } catch (URISyntaxException ex) {
+                throw new RuntimeException(ex);
+            }
+            json.key("width").value(pms.getWidth());
+            json.key("height").value(pms.getHeight());
+        } else {
+            BufferedImage img = render(symbol);
+            json.key("imageData").value(Base64.encodeBytes(toPNGBytes(img), Base64.DONT_BREAK_LINES));
+            // this is a 'virtual' gsr URI - the layer can be resolved by id and
+            // if present, the idx refers to the index of the sub-renderer
+            json.key("url").value("gsr:" + layer.getId() + (idx == null ? "" : ":" + idx));
+            json.key("width").value(img.getWidth());
+            json.key("height").value(img.getHeight());
+        }
+        json.endObject();
     }
-    
-    private static String encodeImageSymbol(Symbol symbol) {
+
+    public static BufferedImage render(Symbol symbol) {
+
         BufferedImage image = prepareImage();
         Graphics2D canvas = image.createGraphics();
-        
+
+        canvas.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         try {
             if (symbol instanceof SimpleMarkerSymbol) {
                 SimpleMarkerSymbol simpleMarkerSymbol = (SimpleMarkerSymbol) symbol;
@@ -185,15 +212,13 @@ public class LegendResource extends Resource {
                 Color fillColor = colorForRGBA(simpleMarkerSymbol.getColor());
                 Color strokeColor = colorForRGBA(simpleMarkerSymbol.getOutline().getColor());
                 Stroke stroke = new BasicStroke(simpleMarkerSymbol.getOutline().getWidth());
-                
+
                 canvas.setColor(fillColor);
                 canvas.fill(shape);
-                
+
                 canvas.setColor(strokeColor);
                 canvas.setStroke(stroke);
                 canvas.draw(shape);
-            } else if (symbol instanceof PictureMarkerSymbol) {
-                // TODO: Implement image preview
             } else if (symbol instanceof TextSymbol) {
                 // TODO: Implement font preview
             } else if (symbol instanceof SimpleFillSymbol) {
@@ -202,10 +227,10 @@ public class LegendResource extends Resource {
                 final Color fillColor = colorForRGBA(simpleFillSymbol.getColor());
                 final Stroke stroke = strokeForLineSymbol(simpleFillSymbol.getOutline());
                 final Color strokeColor = colorForRGBA(simpleFillSymbol.getOutline().getColor());
-                
+
                 canvas.setColor(fillColor);
                 canvas.fill(sample);
-                
+
                 canvas.setStroke(stroke);
                 canvas.setColor(strokeColor);
                 canvas.draw(sample);
@@ -214,7 +239,7 @@ public class LegendResource extends Resource {
                 final Shape sample = sampleLine();
                 final Stroke stroke = strokeForLineSymbol(simpleLineSymbol);
                 final Color color = colorForRGBA(simpleLineSymbol.getColor());
-                
+
                 canvas.setStroke(stroke);
                 canvas.setColor(color);
                 canvas.draw(sample);
@@ -222,8 +247,7 @@ public class LegendResource extends Resource {
         } finally {
             canvas.dispose();
         }
-        byte[] buff = toPNGBytes(image);
-        return Base64.encodeBytes(buff, Base64.DONT_BREAK_LINES); // ArcGIS doesn't break at 76 columns, so neither do we.
+        return image;
     }
     
     private static Stroke strokeForLineSymbol(SimpleLineSymbol outline) {
@@ -315,7 +339,7 @@ public class LegendResource extends Resource {
         return line;
     }
     
-    private static byte[] toPNGBytes(BufferedImage image) {
+    public static byte[] toPNGBytes(BufferedImage image) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         
         try {
@@ -328,6 +352,6 @@ public class LegendResource extends Resource {
     }
 
     private static BufferedImage prepareImage() {
-        return new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR);
+        return new BufferedImage((int)MARKER_SIZE, (int)MARKER_SIZE, BufferedImage.TYPE_4BYTE_ABGR);
     }
 }
