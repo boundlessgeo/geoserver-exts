@@ -78,9 +78,10 @@ class MinimalDiffBoundsConsumer implements PreOrderDiffWalk.Consumer {
     }
 
     @Override
-    public void feature(@Nullable Node left, @Nullable Node right) {
+    public boolean feature(@Nullable Node left, @Nullable Node right) {
         addEnv(left);
         addEnv(right);
+        return true;
     }
 
     @Override
