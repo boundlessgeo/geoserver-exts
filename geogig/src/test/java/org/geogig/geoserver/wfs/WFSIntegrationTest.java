@@ -153,7 +153,7 @@ public class WFSIntegrationTest extends WFSTestSupport {
         fti.setName("Lines");
         fti.setAdvertised(true);
         fti.setEnabled(true);
-        fti.setFilter(Filter.INCLUDE);
+        //fti.setFilter(Filter.INCLUDE);
         fti.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
         ReferencedEnvelope bounds = new ReferencedEnvelope(-180, 180, -90, 90,
                 CRS.decode("EPSG:4326"));

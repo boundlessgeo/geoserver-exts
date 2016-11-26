@@ -571,6 +571,7 @@
     <module>mongodb</module>
     <module>fgdb</module>
     <module>cloudwatch</module>
+    <module>geogig</module>
   </modules>
 
   <properties>
