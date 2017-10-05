@@ -91,9 +91,13 @@ public class OWSServiceInstrumentTest {
     @Test
     public void testSetServiceName() {
         System.out.println("setServiceName");
+        String oldServiceName = instance.getServiceName();
         String serviceName = "";
         
         instance.setServiceName(serviceName);
+
+        //restore previous service name
+        instance.setServiceName(oldServiceName);
 
     }
 
