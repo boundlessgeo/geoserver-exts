@@ -1,0 +1,36 @@
+<assembly>
+  <id>printng</id>
+  <formats>
+    <format>zip</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <fileSets>
+    <fileSet>
+      <directory>printng/target</directory>
+      <outputDirectory></outputDirectory>
+      <includes>
+        <include>printng-*.jar</include>
+      </includes>
+      <excludes>
+        <exclude>*-sources.jar</exclude>
+      </excludes>
+    </fileSet>
+    <fileSet>
+      <directory>printng/target/dependency</directory>
+      <outputDirectory></outputDirectory>
+      <includes>
+        <include>avalon-framework-*.jar</include>
+        <include>bcmail-*.jar</include>
+        <include>core-renderer-*.jar</include>
+        <include>fop-*.jar</include>
+        <include>mapfish-geo-lib-*.jar</include>
+        <include>print-lib-*.jar</include>
+        <include>pvalsecc-*.jar</include>
+        <include>tagsoup-*.jar</include>
+        <include>xalan-*.jar</include>
+        <include>xercesImpl-*.jar</include>
+        <include>xmlgraphics-commons-*.jar</include>
+      </includes>
+    </fileSet>
+  </fileSets>
+</assembly>
