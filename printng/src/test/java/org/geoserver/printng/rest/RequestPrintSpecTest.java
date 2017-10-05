@@ -1,4 +1,4 @@
-package org.geoserver.printng.restlet;
+package org.geoserver.printng.rest;
 
 import java.io.File;
 import static org.junit.Assert.*;

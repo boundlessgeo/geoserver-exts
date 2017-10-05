@@ -1,25 +1,32 @@
-package org.geoserver.printng.restlet;
+package org.geoserver.printng.rest;
 
 import static testsupport.PrintTestSupport.assertPDF;
 import static testsupport.PrintTestSupport.assertPNG;
 import static testsupport.PrintTestSupport.assertTemplateExists;
-import static testsupport.PrintTestSupport.form;
+import static testsupport.PrintTestSupport.map;
 import junit.framework.Test;
 
 import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.test.GeoServerTestSupport;
-import org.restlet.data.MediaType;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import net.sf.json.JSONObject;
 import org.geoserver.printng.GeoserverSupport;
+import org.springframework.util.MultiValueMap;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Put all tests that require full geoserver support here.
  * 
  * @author Ian Schneider <ischneider@opengeo.org>
  */
-public class RestEndpointTest extends GeoServerTestSupport {
+public class PrintControllerTest extends GeoServerTestSupport {
 
     String path;
     String body;
@@ -28,13 +35,13 @@ public class RestEndpointTest extends GeoServerTestSupport {
     int height;
     int status = 200;
     String[] formData;
-    String requestContentType = "text/xml";
+    String requestContentType = MediaType.TEXT_HTML_VALUE;
     // see mockrunner note below
     boolean allowEmptyContentType = false;
 
     // make sure we don't recreate the data dir constantly
     public static Test suite() {
-        return new OneTimeTestSetup(new RestEndpointTest());
+        return new OneTimeTestSetup(new PrintControllerTest());
     }
 
     @Override
@@ -97,7 +104,7 @@ public class RestEndpointTest extends GeoServerTestSupport {
 
         // render png w/ get params
         path = "/rest/printng/freemarker/foobar.png?msg=BAR";
-        body = "";
+        body = " ";
         contentType = "image/png";
         status = 200;
         runPostTest();
@@ -140,12 +147,53 @@ public class RestEndpointTest extends GeoServerTestSupport {
         return resp;
     }
 
+    private String formText(MultiValueMap<String, String> form) throws UnsupportedEncodingException {
+        StringBuilder builder = new StringBuilder();
+        for (Iterator<String> nameIterator = form.keySet().iterator(); nameIterator.hasNext();) {
+            String name = nameIterator.next();
+            for (Iterator<String> valueIterator = form.get(name).iterator(); valueIterator.hasNext();) {
+                String value = valueIterator.next();
+                builder.append(URLEncoder.encode(name, "UTF-8"));
+                if (value != null) {
+                    builder.append('=');
+                    builder.append(URLEncoder.encode(value, "UTF-8"));
+                }
+                if (valueIterator.hasNext()) {
+                    builder.append('&');
+                }
+            }
+            if (nameIterator.hasNext()) {
+                builder.append('&');
+            }
+        }
+        return builder.toString();
+    }
     private MockHttpServletResponse runPostTest() throws Exception {
         if (formData != null) {
-            body = form(formData).getWebRepresentation().getText();
-            requestContentType = MediaType.APPLICATION_WWW_FORM.toString();
+            body = formText(map(formData));
+            requestContentType = MediaType.APPLICATION_FORM_URLENCODED_VALUE;
+            return assertPostResponse(postFormAsServletResponse(path, body, requestContentType));
+        } else {
+            return assertPostResponse(postAsServletResponse(path, body, requestContentType));
         }
-        return assertPostResponse(postAsServletResponse(path, body, requestContentType));
+    }
+
+    //Spring uses the parameter map to read form data
+    protected MockHttpServletResponse postFormAsServletResponse(String path, String body, String contentType) throws Exception {
+        MockHttpServletRequest request = createRequest(path);
+        request.setMethod("POST");
+        request.setContentType(contentType);
+        request.setContent(body.getBytes("UTF-8"));
+        request.addHeader("Content-type", contentType);
+
+        if (formData != null) {
+            MultiValueMap<String, String> formMap = map(formData);
+            for (String key : formMap.keySet()) {
+                request.setParameter(key, formMap.get(key).toArray(new String[formMap.get(key).size()]));
+            }
+        }
+
+        return dispatch(request);
     }
     
     private MockHttpServletResponse assertJSONPostResponse(MockHttpServletResponse resp) throws Exception {
@@ -157,7 +205,7 @@ public class RestEndpointTest extends GeoServerTestSupport {
         assertNotNull(getURL);
         assertFalse("invalid path separators", getURL.indexOf('\\') >= 0);
         // geoserver is the hard-coded context prefix
-        String context = "/geoserver";
+        String context = "http://localhost/geoserver";
         assertTrue("expected getURL to be prefixed by servlet context", getURL.startsWith(context));
         // adjust the getURL - the test code will add the prefix again
         getURL = getURL.replace(context, "");
@@ -169,8 +217,10 @@ public class RestEndpointTest extends GeoServerTestSupport {
     
     private MockHttpServletResponse runJSONPostTest() throws Exception {
         if (formData != null) {
-            body = form(formData).getWebRepresentation().getText();
-            requestContentType = MediaType.APPLICATION_WWW_FORM.toString();
+            body = formText(map(formData));
+            requestContentType = MediaType.APPLICATION_FORM_URLENCODED_VALUE;
+        } else {
+            requestContentType = MediaType.APPLICATION_JSON_VALUE;
         }
         String[] parts = path.split("[?]");
         String query = "";

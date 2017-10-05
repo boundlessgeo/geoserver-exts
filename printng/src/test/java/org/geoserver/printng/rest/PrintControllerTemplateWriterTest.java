@@ -1,4 +1,4 @@
-package org.geoserver.printng;
+package org.geoserver.printng.rest;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -7,7 +7,7 @@ import java.io.Reader;
 import java.io.StringReader;
 
 import org.apache.commons.io.IOUtils;
-import org.geoserver.printng.spi.FreemarkerReader;
+import org.geoserver.printng.GeoserverSupport;
 import org.junit.Test;
 import org.junit.AfterClass;
 import static org.junit.Assert.*;
@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
 import freemarker.template.SimpleHash;
 import org.apache.commons.io.FileUtils;
 
-public class FreemarkerReaderTest {
+public class PrintControllerTemplateWriterTest {
     
     @AfterClass
     public static void cleanTempFiles() throws IOException {
@@ -29,7 +29,7 @@ public class FreemarkerReaderTest {
     @Test
     public void testReaderNotFound() throws IOException {
         try {        
-            new FreemarkerReader("doesnotexist", null);
+            PrintController.writeTemplate("doesnotexist", null);
             fail("Expecting IOException to be thrown");
         } catch (IOException e) {
             // pass
@@ -39,9 +39,8 @@ public class FreemarkerReaderTest {
     @Test
     public void testReaderFound() throws IOException {        
         createTemplate("foo", new StringReader("<div>foobar</div>"));
-        FreemarkerReader freemarkerReader = new FreemarkerReader("foo", null);
-        Reader reader = freemarkerReader.reader();
-        String result = IOUtils.toString(reader);
+
+        String result = PrintController.writeTemplate("foo", null);
         assertEquals("Invalid template contents", "<div>foobar</div>", result);
     }
 
@@ -50,10 +49,7 @@ public class FreemarkerReaderTest {
         SimpleHash simpleHash = new SimpleHash();
         simpleHash.put("quux", "morx");
         createTemplate("foo", new StringReader("<div>${quux}</div>"));
-        FreemarkerReader freemarkerTemplateReader = new FreemarkerReader("foo",
-                simpleHash);
-        Reader reader = freemarkerTemplateReader.reader();
-        String result = IOUtils.toString(reader);
+        String result = PrintController.writeTemplate("foo", simpleHash);
         assertEquals("Invalid template interpoloation", "<div>morx</div>", result);
     }
 
@@ -63,7 +59,7 @@ public class FreemarkerReaderTest {
         simpleHash.put("quux", "morx");
         createTemplate("foo", new StringReader("<div>${fleem}</div>"));
         try {
-            new FreemarkerReader("foo", simpleHash);
+            PrintController.writeTemplate("foo", simpleHash);
             fail("Expected IOException thrown for processing bad template params");
         } catch (IOException e) {
         }

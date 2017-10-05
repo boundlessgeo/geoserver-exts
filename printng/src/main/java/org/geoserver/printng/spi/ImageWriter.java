@@ -23,7 +23,12 @@ public class ImageWriter extends PrintngWriter {
     public ImageWriter(String format) {
         this.format = format;
     }
-    
+
+    @Override
+    public String getExtension() {
+        return format;
+    }
+
     @Override
     protected void writeInternal(PrintSpec spec, OutputStream out) throws IOException {
         Document document = spec.getDocument();

@@ -12,6 +12,11 @@ import com.lowagie.text.DocumentException;
 public class PDFWriter extends PrintngWriter {
 
     @Override
+    public String getExtension() {
+        return "pdf";
+    }
+
+    @Override
     public void writeInternal(PrintSpec spec, OutputStream out) throws IOException {
         ITextRenderer renderer = new ITextRenderer();
         configure(renderer.getSharedContext(), spec);

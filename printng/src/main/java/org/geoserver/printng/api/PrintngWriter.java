@@ -16,6 +16,8 @@ public abstract class PrintngWriter {
             callback.cleanup();
         }
     }
+
+    public abstract String getExtension();
     
     protected final void configure(SharedContext context, PrintSpec spec) throws IOException {
         String baseURL = spec.getBaseURL();

@@ -1,32 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
-<beans>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
 
-  <bean id="restPrintMapping" class="org.geoserver.rest.RESTMapping">
-    <property name="routes">
-      <map>
-        <entry>
-          <key>
-            <value>/printng/render.{ext}</value>
-          </key>
-          <value>printFinderFromRequestBody</value>
-        </entry>
-        <entry>
-          <key>
-            <value>/printng/freemarker/{template}.{ext}</value>
-          </key>
-          <value>printFinderFromFreemarkerTemplate</value>
-        </entry>
-        <entry>
-          <key>
-            <value>/printng/freemarker/{template}</value>
-          </key>
-          <value>printFreemarkerTemplateFinder</value>
-        </entry>
-      </map>
-    </property>
-  </bean>
-  
+  <context:component-scan base-package="org.geoserver.printng.rest" />
+
   <!--
   Provide a public endpoint to serve printing output from. Output files are
   generated using a random UUID and cleaned out periodically.
@@ -43,23 +25,5 @@
        </props>
      </property>
   </bean>
-
-  <bean id="printFinderFromRequestBody" class="org.geoserver.printng.restlet.PrintFinder">
-    <constructor-arg index="0">
-      <ref bean="printngReaderRequestBody" />
-    </constructor-arg>
-  </bean>
-
-  <bean id="printFinderFromFreemarkerTemplate" class="org.geoserver.printng.restlet.PrintFinder">
-    <constructor-arg index="0">
-      <ref bean="printngReaderFreemarkerTemplate" />
-    </constructor-arg>
-  </bean>
-
-  <bean id="printngReaderRequestBody" class="org.geoserver.printng.spi.RequestBodyReaderSource" />
-  <bean id="printngReaderFreemarkerTemplate" class="org.geoserver.printng.spi.FreemarkerReaderSource" />
-
-  <bean id="printFreemarkerTemplateFinder"
-    class="org.geoserver.printng.restlet.FreemarkerTemplateFinder" />
 
 </beans>

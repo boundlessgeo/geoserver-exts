@@ -7,7 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -15,8 +17,10 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import org.geoserver.printng.GeoserverSupport;
 import org.geotools.util.logging.Logging;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
 import static org.junit.Assert.*;
-import org.restlet.data.Form;
 
 /**
  *
@@ -26,12 +30,12 @@ public final class PrintTestSupport {
     
     private PrintTestSupport() {}
     
-    public static Form form(String... kvp) {
-        Form form = new Form();
+    public static MultiValueMap<String, String> map(String... kvp) {
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         for (int i = 0; i < kvp.length; i += 2) {
-            form.add(kvp[i], kvp[i + 1]);
+            map.add(kvp[i], kvp[i + 1]);
         }
-        return form;
+        return map;
     }
     
     public static void assertTemplateExists(String path) throws IOException {

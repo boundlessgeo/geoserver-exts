@@ -18,8 +18,8 @@ import javax.xml.transform.sax.SAXSource;
 
 import org.ccil.cowan.tagsoup.Parser;
 import org.geoserver.printng.PrintSupport;
-import org.geoserver.rest.RestletException;
-import org.restlet.data.Status;
+import org.geoserver.rest.RestException;
+import org.springframework.http.HttpStatus;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -91,7 +91,7 @@ public class ParsedDocument {
             transformer = TransformerFactory.newInstance().newTransformer();
         } catch (TransformerConfigurationException e) {
             String err = "Error creating xml transformer";
-            throw new RestletException(err, Status.SERVER_ERROR_INTERNAL, e);
+            throw new RestException(err, HttpStatus.INTERNAL_SERVER_ERROR, e);
         }
         try {
             Parser parser = new Parser();
@@ -106,7 +106,7 @@ public class ParsedDocument {
             return document;
         } catch (TransformerException e) {
             String err = "Error parsing input xml";
-            throw new RestletException(err, Status.CLIENT_ERROR_BAD_REQUEST, e);
+            throw new RestException(err, HttpStatus.BAD_REQUEST, e);
         }
     }
     

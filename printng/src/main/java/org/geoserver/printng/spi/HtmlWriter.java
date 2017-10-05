@@ -13,6 +13,11 @@ import org.geoserver.printng.api.PrintngWriter;
 public class HtmlWriter extends PrintngWriter {
 
     @Override
+    public String getExtension() {
+        return "html";
+    }
+
+    @Override
     public void writeInternal(PrintSpec spec, OutputStream out) throws IOException {
         PrintSupport.write(spec.getDocument(), out, false);
     }
