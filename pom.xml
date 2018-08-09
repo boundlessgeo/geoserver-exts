@@ -169,7 +169,7 @@
           <descriptors>
             <descriptor>assembly/mongodb.xml</descriptor>
             <descriptor>assembly/printng.xml</descriptor>
-            <descriptor>assembly/fgdb.xml</descriptor>
+            <!--<descriptor>assembly/fgdb.xml</descriptor>-->
             <descriptor>assembly/cloudwatch.xml</descriptor>
           </descriptors>
         </configuration>
